@@ -471,7 +471,26 @@ void G_RunFrame(void) {
             if ((ent->groundentity)
                     && (ent->groundentity->linkcount
                             != ent->groundentity_linkcount)) {
-                ent->groundentity = NULL;
+                if (ent->client) {
+                    vec3_t end;
+                    trace_t trace;
+
+                    // A pusher can carry a client without a new usercmd. Recheck
+                    // actual support, also after a team push was rolled back.
+                    VectorCopy(ent->s.origin, end);
+                    end[2] -= 0.25f;
+                    trace = gi.trace(ent->s.origin, ent->mins, ent->maxs, end,
+                            ent, ent->health > 0 ? MASK_PLAYERSOLID : MASK_DEADSOLID);
+                    if (!trace.startsolid && !trace.allsolid
+                            && trace.ent == ent->groundentity
+                            && trace.plane.normal[2] >= 0.7f) {
+                        ent->groundentity_linkcount = ent->groundentity->linkcount;
+                    } else {
+                        ent->groundentity = NULL;
+                    }
+                } else {
+                    ent->groundentity = NULL;
+                }
             }
             if (i > 0 && i <= game.maxclients) {
                 ClientBeginServerFrame(ent);
