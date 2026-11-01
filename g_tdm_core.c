@@ -1530,8 +1530,8 @@ void TDM_CheckTimes(void) {
             TDM_EndIntermission();
         }
 
-        // take screenshot 5 frames after the intermission began
-        if (remaining == SECS_TO_FRAMES (g_intermission_time->value) - 5) {
+        // take screenshot 0.5 seconds after the intermission began
+        if (remaining == SECS_TO_FRAMES (g_intermission_time->value) - SECS_TO_FRAMES (0.5f)) {
             edict_t *client;
 
             FOREACH_CLIENT(client) {
@@ -2862,7 +2862,8 @@ void TDM_UpdateConfigStrings(qboolean forceUpdate) {
 
         last_time_remaining = time_remaining;
 
-        secs = ceil((float) time_remaining * FRAMETIME);
+        // whole frames to seconds rounded up, without the float 1/SERVER_FPS error
+        secs = (time_remaining + SERVER_FPS - 1) / SERVER_FPS;
 
         if (secs < 0) {
             secs = 0;
@@ -2895,7 +2896,7 @@ void TDM_UpdateConfigStrings(qboolean forceUpdate) {
         int mins, secs;
 
         last_timeout_remaining = timeout_remaining;
-        secs = ceil((float) timeout_remaining * FRAMETIME);
+        secs = (timeout_remaining + SERVER_FPS - 1) / SERVER_FPS;
 
         if (secs < 0) {
             secs = 0;
