@@ -319,6 +319,7 @@ typedef struct {
     edict_t *ent;
     vec3_t origin;
     vec3_t angles;
+    vec3_t carry;
     float deltayaw;
 } pushed_t;
 pushed_t pushed[MAX_EDICTS], *pushed_p;
@@ -333,19 +334,20 @@ qboolean SV_Push(edict_t *pusher, vec3_t move, vec3_t amove) {
     edict_t *check, *block;
     vec3_t mins, maxs;
     pushed_t *p;
-    vec3_t org, org2, move2, forward, right, up;
+    vec3_t org, org2, move2, forward, right, up, carry;
 
     // clamp the move to 1/8 units, so the position will
-    // be accurate for client side prediction
+    // be accurate for client side prediction; the rounding remainder
+    // is carried to the next move of this path (part of the push
+    // transaction, restored on a block)
+    VectorCopy(pusher->push_carry, carry);
     for (i = 0; i < 3; i++) {
         float temp;
-        temp = move[i] * 8.0f;
-        if (temp > 0.0f) {
-            temp += 0.5f;
-        } else {
-            temp -= 0.5f;
-        }
-        move[i] = 0.125f * (int) temp;
+        int r;
+        temp = move[i] * 8.0f + pusher->push_carry[i];
+        r = (int) (temp > 0.0f ? temp + 0.5f : temp - 0.5f);
+        pusher->push_carry[i] = temp - r;
+        move[i] = 0.125f * r;
     }
 
     // find the bounding box
@@ -362,6 +364,7 @@ qboolean SV_Push(edict_t *pusher, vec3_t move, vec3_t amove) {
     pushed_p->ent = pusher;
     VectorCopy(pusher->s.origin, pushed_p->origin);
     VectorCopy(pusher->s.angles, pushed_p->angles);
+    VectorCopy(carry, pushed_p->carry);
     if (pusher->client) {
         pushed_p->deltayaw = pusher->client->ps.pmove.delta_angles[YAW];
     }
@@ -411,6 +414,7 @@ qboolean SV_Push(edict_t *pusher, vec3_t move, vec3_t amove) {
             pushed_p->ent = check;
             VectorCopy(check->s.origin, pushed_p->origin);
             VectorCopy(check->s.angles, pushed_p->angles);
+            VectorCopy(check->push_carry, pushed_p->carry);
 
             // try moving the contacted entity
             VectorAdd(check->s.origin, move, check->s.origin);
@@ -462,6 +466,7 @@ qboolean SV_Push(edict_t *pusher, vec3_t move, vec3_t amove) {
         for (p = pushed_p - 1; p >= pushed; p--) {
             VectorCopy(p->origin, p->ent->s.origin);
             VectorCopy(p->angles, p->ent->s.angles);
+            VectorCopy(p->carry, p->ent->push_carry);
             if (p->ent->client) {
                 p->ent->client->ps.pmove.delta_angles[YAW] = p->deltayaw;
             }

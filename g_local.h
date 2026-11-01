@@ -1763,6 +1763,7 @@ struct edict_s {
 
     // common data blocks
     moveinfo_t  moveinfo;
+    vec3_t      push_carry;     // SV_Push 1/8 quantization remainder, in 1/8 units
     //monsterinfo_t monsterinfo;
 
     enttype_t   enttype;

@@ -111,6 +111,7 @@ void Think_AccelMove(edict_t *ent);
 
 void Move_Calc(edict_t *ent, vec3_t dest, void (*func)(edict_t*)) {
     VectorClear(ent->velocity);
+    VectorClear(ent->push_carry);   // a new path: no remainder of the old one
     VectorSubtract(dest, ent->s.origin, ent->moveinfo.dir);
     ent->moveinfo.remaining_distance = VectorNormalize(ent->moveinfo.dir);
     ent->moveinfo.endfunc = func;
