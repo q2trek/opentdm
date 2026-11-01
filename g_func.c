@@ -109,6 +109,22 @@ void Move_Begin(edict_t *ent) {
 
 void Think_AccelMove(edict_t *ent);
 
+// final segment of Think_AccelMove: its speeds are in units per 100 ms
+// controller interval, the remainder too (not one world frame, unlike the
+// linear Move_Final)
+static void AccelMove_Final(edict_t *ent) {
+    if (ent->moveinfo.remaining_distance == 0) {
+        Move_Done(ent);
+        return;
+    }
+
+    VectorScale(ent->moveinfo.dir, ent->moveinfo.remaining_distance / 0.1f,
+            ent->velocity);
+
+    ent->think = Move_Done;
+    ent->nextthink = level.framenum + SECS_TO_FRAMES(0.1f);
+}
+
 void Move_Calc(edict_t *ent, vec3_t dest, void (*func)(edict_t*)) {
     VectorClear(ent->velocity);
     VectorClear(ent->push_carry);   // a new path: no remainder of the old one
@@ -334,7 +350,7 @@ void Think_AccelMove(edict_t *ent) {
 
     // will the entire move complete on next frame?
     if (ent->moveinfo.remaining_distance <= ent->moveinfo.current_speed) {
-        Move_Final(ent);
+        AccelMove_Final(ent);
         return;
     }
 
