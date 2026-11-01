@@ -1451,6 +1451,10 @@ void TDM_CheckTimes(void) {
             gi.bprintf(PRINT_HIGH, "%d\n", (int) (remaining / SERVER_FPS));
         } else if (remaining == 0) {
             TDM_FixDeltaAngles();
+            // a press from before the timeout does not fire on resume
+            FOREACH_CLIENT(ent) {
+                ent->client->attack_pending = false;
+            }
             gi.bprintf(PRINT_HIGH, "Fight!\n");
             level.tdm_timeout_caller = NULL;
             level.match_resume_framenum = 0;

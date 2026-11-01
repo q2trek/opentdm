@@ -1922,6 +1922,7 @@ void ClientThink(edict_t *ent, usercmd_t *ucmd) {
         } else {
             if (!client->weapon_thunk) {
                 client->weapon_thunk = true;
+                client->attack_pending = true;
                 Think_Weapon(ent);
             }
         }

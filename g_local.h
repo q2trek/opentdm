@@ -1530,6 +1530,7 @@ struct gclient_s {
     int            latched_buttons;
 
     qboolean       weapon_thunk;
+    qboolean       attack_pending;  // press not yet seen by a 100 ms weapon step
 
     const gitem_t  *newweapon;
 
