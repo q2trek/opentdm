@@ -503,6 +503,8 @@ typedef struct {
     smartmap_t    smartmaps[SM_MAX];// random known-good maps for team sizes
 } game_locals_t;
 
+#define MAX_CRUSH   64
+
 /**
  * this structure is cleared as each map is entered it is read/written to the
  * level.sav file for savegames
@@ -535,6 +537,12 @@ typedef struct {
     int             numspawns;
     edict_t         *spawns[TDM_MAX_MAP_SPAWNPOINTS];
     time_t          spawntime;
+
+    // world-driven continuous crush: next damage frame of each source/victim pair
+    struct {
+        edict_t     *self, *other;
+        int         framenum;
+    } crush[MAX_CRUSH];
 } level_locals_t;
 
 
@@ -899,6 +907,7 @@ void G_SetMovedir(vec3_t angles, vec3_t movedir);
 void G_InitEdict(edict_t *e);
 edict_t *G_Spawn(void);
 void G_FreeEdict(edict_t *e);
+qboolean G_CrushAllowed(edict_t *self, edict_t *other);
 void G_StuffCmd(edict_t *e, const char *fmt, ...)
         __attribute__ ((format (printf, 2, 3)));
 void G_UnicastSound(edict_t *ent, int index, qboolean reliable);
@@ -1724,6 +1733,7 @@ struct edict_s {
     edict_t     *activator;
     edict_t     *groundentity;
     int         groundentity_linkcount;
+    int         crush_framenum;     // G_CrushAllowed on a full table: next damage frame of this victim
     edict_t     *teamchain;
     edict_t     *teammaster;
 

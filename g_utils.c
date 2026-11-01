@@ -447,10 +447,58 @@ void G_FreeEdict(edict_t *ed) {
         return;
     }
 
+    // a new entity in this slot starts without the crush cooldown
+    for (int i = 0; i < MAX_CRUSH; i++) {
+        if (level.crush[i].self == ed || level.crush[i].other == ed) {
+            level.crush[i].framenum = 0;
+        }
+    }
+
     memset(ed, 0, sizeof(*ed));
     ed->classname = "freed";
     ed->freed_framenum = level.framenum;
     ed->inuse = false;
+}
+
+/**
+ * World-driven continuous crush (blocked door/plat/rotating, func_object
+ * resting on a moving victim) runs every world frame. Each source/victim pair
+ * deals damage at most once per 0.1 s, as at 10 Hz: the first hit is
+ * immediate, repeated callbacks of one frame do not hit again, other pairs
+ * are independent. The physical reaction to the block is not gated.
+ * With more than MAX_CRUSH pairs within 0.1 s, the pairs left out of the
+ * table hit each victim at most once per 0.1 s (crush_framenum); no pair
+ * hits a victim within 0.1 s of such a hit.
+ */
+qboolean G_CrushAllowed(edict_t *self, edict_t *other) {
+    int i, free = -1;
+
+    for (i = 0; i < MAX_CRUSH; i++) {
+        if (level.crush[i].self == self && level.crush[i].other == other) {
+            break;
+        }
+        if (free < 0 && level.crush[i].framenum <= level.framenum) {
+            free = i;
+        }
+    }
+    if (level.framenum < other->crush_framenum) {
+        return false;   // a table overflow hit this victim within 0.1 s
+    }
+    if (i < MAX_CRUSH) {
+        if (level.framenum < level.crush[i].framenum) {
+            return false;
+        }
+    } else if (free >= 0) {
+        i = free;
+    } else {
+        // table full: at most one hit per 0.1 s on this victim
+        other->crush_framenum = level.framenum + SECS_TO_FRAMES(0.1f);
+        return true;
+    }
+    level.crush[i].self = self;
+    level.crush[i].other = other;
+    level.crush[i].framenum = level.framenum + SECS_TO_FRAMES(0.1f);
+    return true;
 }
 
 /**

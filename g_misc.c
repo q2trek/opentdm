@@ -470,8 +470,10 @@ void func_object_touch(edict_t *self, edict_t *other, cplane_t *plane,
     if (other->takedamage == DAMAGE_NO) {
         return;
     }
-    T_Damage(other, self, self, vec3_origin, self->s.origin, vec3_origin,
-            self->dmg, 1, 0, MOD_CRUSH);
+    if (G_CrushAllowed(self, other)) {
+        T_Damage(other, self, self, vec3_origin, self->s.origin, vec3_origin,
+                self->dmg, 1, 0, MOD_CRUSH);
+    }
 }
 
 /**

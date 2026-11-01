@@ -406,8 +406,10 @@ void plat_blocked(edict_t *self, edict_t *other) {
         return;
     }
 
-    T_Damage(other, self, self, vec3_origin, other->s.origin, vec3_origin,
-            self->dmg, 1, 0, MOD_CRUSH);
+    if (G_CrushAllowed(self, other)) {
+        T_Damage(other, self, self, vec3_origin, other->s.origin, vec3_origin,
+                self->dmg, 1, 0, MOD_CRUSH);
+    }
 
     if (self->moveinfo.state == STATE_UP) {
         plat_go_down(self);
@@ -586,8 +588,10 @@ void SP_func_plat(edict_t *ent) {
  */
 
 void rotating_blocked(edict_t *self, edict_t *other) {
-    T_Damage(other, self, self, vec3_origin, other->s.origin, vec3_origin,
-            self->dmg, 1, 0, MOD_CRUSH);
+    if (G_CrushAllowed(self, other)) {
+        T_Damage(other, self, self, vec3_origin, other->s.origin, vec3_origin,
+                self->dmg, 1, 0, MOD_CRUSH);
+    }
 }
 
 void rotating_touch(edict_t *self, edict_t *other, cplane_t *plane,
@@ -1096,8 +1100,10 @@ void door_blocked(edict_t *self, edict_t *other) {
         return;
     }
 
-    T_Damage(other, self, self, vec3_origin, other->s.origin, vec3_origin,
-            self->dmg, 1, 0, MOD_CRUSH);
+    if (G_CrushAllowed(self, other)) {
+        T_Damage(other, self, self, vec3_origin, other->s.origin, vec3_origin,
+                self->dmg, 1, 0, MOD_CRUSH);
+    }
 
     if (self->spawnflags & DOOR_CRUSHER) {
         return;
