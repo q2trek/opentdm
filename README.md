@@ -12,6 +12,7 @@ What the branch changes:
 - Accelerated doors and plats finish their last step over 100 ms instead of in one world frame.
 - A player standing on a mover keeps it as ground in frames without a usercmd (a movement packet from the client), so a descending lift no longer drops them.
 - An attack tap between two 100 ms weapon steps fires on the next step instead of being lost.
+- Fire released during a timeout stays released when the match resumes.
 - The `players` connect time, the intermission screenshot delay, the HUD clocks and the trigger_hurt damage and sound are timed in seconds, not frames.
 
 The same code also changes a few things at 10 Hz:
@@ -20,6 +21,7 @@ The same code also changes a few things at 10 Hz:
 - Moves that aren't whole multiples of 1/8 unit keep their exact average speed.
 - A player on a mover keeps it as ground in frames without a usercmd.
 - When more than 64 crush pairs (source and victim) are active within 0.1 s, a second source crushing the same victim in that time loses its hit.
+- Fire released during a timeout no longer shoots once more when the match resumes.
 
 ## Client Commands
 `commands` Show available commands

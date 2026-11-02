@@ -1766,6 +1766,15 @@ void ClientThink(edict_t *ent, usercmd_t *ucmd) {
         client->resp.cmd_angles[1] = SHORT2ANGLE(ucmd->angles[1]);
         client->resp.cmd_angles[2] = SHORT2ANGLE(ucmd->angles[2]);
         client->ps.pmove.pm_type = PM_FREEZE;
+        // the weapon does not run during a timeout: follow the real
+        // buttons, so that fire released during the pause is not still
+        // down on resume, and drop a press made during it
+        if (tdm_match_status == MM_TIMEOUT) {
+            client->oldbuttons = client->buttons;
+            client->buttons = ucmd->buttons;
+            client->latched_buttons &= ~BUTTON_ATTACK;
+            client->attack_pending = false;
+        }
         return;
     }
 
