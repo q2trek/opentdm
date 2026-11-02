@@ -296,7 +296,7 @@ void ClientEndServerFrames(void) {
 /**
  * Returns the created target changelevel
  */
-edict_t* CreateTargetChangeLevel(char *map) {
+edict_t* CreateTargetChangeLevel(const char *map) {
     edict_t *ent;
 
     ent = G_Spawn();
@@ -307,12 +307,19 @@ edict_t* CreateTargetChangeLevel(char *map) {
 }
 
 /**
- * The timelimit or fraglimit has been exceeded
+ * The timelimit or fraglimit has been exceeded, or an admin or a vote picked
+ * the next map (map, else NULL)
  */
-void EndDMLevel(void) {
+void EndDMLevel(const char *map) {
     edict_t *ent;
     char *s, *t, *f;
     static const char *seps = " ,\n\r";
+
+    // an explicit map wins over DF_SAME_LEVEL and sv_maplist
+    if (map) {
+        BeginIntermission(CreateTargetChangeLevel(map));
+        return;
+    }
 
     // stay on same level flag
     if ((int) dmflags->value & DF_SAME_LEVEL) {
@@ -380,7 +387,7 @@ void CheckDMRules(void) {
     if (timelimit->value) {
         if (level.framenum >= SECS_TO_FRAMES(timelimit->value * 600)) {
             gi.bprintf(PRINT_HIGH, "Timelimit hit.\n");
-            EndDMLevel();
+            EndDMLevel(NULL);
             return;
         }
     }
@@ -394,7 +401,7 @@ void CheckDMRules(void) {
 
             if (cl->resp.score >= fraglimit->value) {
                 gi.bprintf(PRINT_HIGH, "Fraglimit hit.\n");
-                EndDMLevel();
+                EndDMLevel(NULL);
                 return;
             }
         }

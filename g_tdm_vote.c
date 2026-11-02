@@ -73,7 +73,6 @@ char            tdm_configlist_string[900];
 
 tdm_download_t  tdm_vote_download;
 
-void EndDMLevel (void);
 
 /*
  * Apply a vote
@@ -220,11 +219,10 @@ void TDM_ApplyVote(void) {
 
     // let's have this in the end, so it doesn't mess up with other votes like gamemode
     if (vote.flags & VOTE_MAP) {
-        strcpy(level.nextmap, vote.newmap);
         if (!(vote.flags & (VOTE_CONFIG | VOTE_WEBCONFIG))) {
             gi.bprintf(PRINT_CHAT, "New map: %s\n", vote.newmap);
         }
-        EndDMLevel();
+        EndDMLevel(vote.newmap);
     }
 
     if (vote.flags & VOTE_RESTART) {

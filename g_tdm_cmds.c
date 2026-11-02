@@ -345,10 +345,8 @@ void TDM_Changemap_f(edict_t *ent) {
     if (!TDM_Checkmap(ent, mapname)) {
         return;
     }
-    // checkmap checks length
-    strcpy(level.nextmap, mapname);
     gi.bprintf(PRINT_HIGH, "New map: %s\n", mapname);
-    EndDMLevel();
+    EndDMLevel(mapname);
 }
 
 /**
