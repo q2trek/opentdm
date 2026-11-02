@@ -13,7 +13,7 @@ What the branch changes:
 - A player standing on a mover keeps it as ground in frames without a usercmd (a movement packet from the client), so a descending lift no longer drops them.
 - An attack tap between two 100 ms weapon steps fires on the next step instead of being lost.
 - Fire released during a timeout stays released when the match resumes.
-- The `players` connect time, the intermission screenshot delay, the HUD clocks and the trigger_hurt damage and sound are timed in seconds, not frames.
+- The `players` connect time, the intermission screenshot delay, the HUD clocks, the trigger_hurt damage and sound, and the first BFG laser and the BFG explosion are timed in seconds, not frames.
 
 The same code also changes a few things at 10 Hz:
 

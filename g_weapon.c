@@ -740,14 +740,15 @@ void bfg_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
             ATTN_NORM, 0);
     self->solid = SOLID_NOT;
     self->touch = NULL;
-    VectorMA(self->s.origin, -1 * FRAMETIME, self->velocity, self->s.origin);
+    // back off 100 ms of flight, as at 10 Hz: the secondary explosion hurts from there
+    VectorMA(self->s.origin, -0.1f, self->velocity, self->s.origin);
     VectorClear(self->velocity);
     self->s.modelindex = gi.modelindex("sprites/s_bfg3.sp2");
     self->s.frame = 0;
     self->s.sound = 0;
     self->s.effects &= ~EF_ANIM_ALLFAST;
     self->think = bfg_explode;
-    self->nextthink = level.framenum + 1;
+    self->nextthink = level.framenum + SECS_TO_FRAMES(0.1f);
     self->enemy = other;
 
     gi.linkentity(self);
@@ -872,7 +873,7 @@ void fire_bfg(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed,
     bfg->s.sound = gi.soundindex("weapons/bfg__l1a.wav");
 
     bfg->think = bfg_think;
-    bfg->nextthink = level.framenum + 1;
+    bfg->nextthink = level.framenum + SECS_TO_FRAMES(0.1f);
     bfg->teammaster = bfg;
     bfg->teamchain = NULL;
 
