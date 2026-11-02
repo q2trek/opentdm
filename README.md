@@ -2,6 +2,25 @@
 
 OpenTDM is an open source team deathmatch and duel mod for Quake II. Origially written by r1ch
 
+## Tick rates from 10 to 60 Hz in this fork
+This is q2trek/opentdm. Its `tickrate` branch is upstream `master` plus the tick rate commits, which keep gameplay consistent across server frame rates, and `master` follows upstream unchanged. OpenTDM always supports variable server FPS, so you only set `sv_fps` (see Server CVARs) on an engine built with variable FPS (Q2PRO nightly builds are). Without it the game runs at 10 Hz. For exact frame timing at 30 and 60 Hz, run it on the engine from q2trek/q2pro.
+
+What the branch changes:
+
+- Crush damage from doors, plats, rotating brushes and func_object hits a victim at most once per 0.1 s from each source.
+- Movers carry their 1/8 unit rounding remainder into the next move, so they keep the right speed and stay on their path.
+- Accelerated doors and plats finish their last step over 100 ms instead of in one world frame.
+- A player standing on a mover keeps it as ground in frames without a usercmd (a movement packet from the client), so a descending lift no longer drops them.
+- An attack tap between two 100 ms weapon steps fires on the next step instead of being lost.
+- The `players` connect time, the intermission screenshot delay, the HUD clocks and the trigger_hurt damage and sound are timed in seconds, not frames.
+
+The same code also changes a few things at 10 Hz:
+
+- The trigger_hurt sound plays on the first contact, and for a trigger_hurt with the SLOW flag on every hit, instead of only on frames divisible by 10.
+- Moves that aren't whole multiples of 1/8 unit keep their exact average speed.
+- A player on a mover keeps it as ground in frames without a usercmd.
+- When more than 64 crush pairs (source and victim) are active within 0.1 s, a second source crushing the same victim in that time loses its hit.
+
 ## Client Commands
 `commands` Show available commands
 
@@ -169,6 +188,8 @@ Value | Description
 `sv demostatus` See the current status of server demo
 
 ## Server CVARs
+`sv_fps <10-60>` Server frame rate (engine cvar): 10, 20, 30, 40, 50 or 60. A value that is not a multiple of 10, or is above 60, stops the server with an error
+
 `g_admin_password <string>` Admin/referee password
 
 `g_admin_vote_decide <0/1>` Whether admin instantly decides votes
