@@ -1400,9 +1400,8 @@ void TDM_CreateConfiglist(void) {
     snprintf(path, sizeof(path) - 1, "./%s/configs/*.cfg", gamedir->string);
     path[sizeof(path) - 1] = '\0';
 
-    filename = Sys_FindFirst(path);
-
-    while (filename) {
+    // every entry advances the scan, a skipped one too
+    for (filename = Sys_FindFirst(path); filename; filename = Sys_FindNext()) {
         valid = true;
 
         configname = strrchr(filename, '/');
@@ -1444,8 +1443,6 @@ void TDM_CreateConfiglist(void) {
             gi.TagFree(tdm_configlist);
             tdm_configlist = tmp;
         }
-
-        filename = Sys_FindNext();
     }
 
     // close before return
