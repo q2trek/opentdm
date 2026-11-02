@@ -1459,7 +1459,8 @@ void TDM_CheckTimes(void) {
         }
     }
 
-    if (level.match_end_framenum) {
+    // during a timeout the match clock stands still, so does the deadline
+    if (level.match_end_framenum && tdm_match_status != MM_TIMEOUT) {
         int remaining;
 
         if (tdm_match_status == MM_SUDDEN_DEATH) {
