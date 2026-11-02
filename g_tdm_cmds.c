@@ -2554,7 +2554,8 @@ void TDM_WeaponTimer_f(edict_t *ent) {
  * List available maps in console
  */
 void TDM_Maplist_f(edict_t *ent) {
-    if (!g_maplistfile || !g_maplistfile->string[0]) {
+    // tdm_maplist stays NULL when g_maplistfile names a missing or empty file
+    if (!g_maplistfile || !g_maplistfile->string[0] || !tdm_maplist) {
         gi.cprintf(ent, PRINT_HIGH, "maplist is undefined on this server.\n");
         return;
     }
