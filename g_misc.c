@@ -913,7 +913,7 @@ void misc_viper_bomb_prethink(edict_t *self) {
     v[2] = diff;
     diff = self->s.angles[2];
     vectoangles(v, self->s.angles);
-    self->s.angles[2] = diff + 10;
+    self->s.angles[2] = diff + 100.0f * FRAMETIME;    // 10 degrees per 100 ms
 }
 
 /**
