@@ -3,7 +3,7 @@
 OpenTDM is an open source team deathmatch and duel mod for Quake II. Origially written by r1ch
 
 ## Tick rates from 10 to 60 Hz in this fork
-This is q2trek/opentdm. Its `tickrate` branch is upstream `master` plus the tick rate commits, which keep gameplay consistent across server frame rates, and `master` follows upstream unchanged. OpenTDM always supports variable server FPS, so you only set `sv_fps` (see Server CVARs) on an engine built with variable FPS (Q2PRO nightly builds are). Without it the game runs at 10 Hz. For exact frame timing at 30 and 60 Hz, run it on the engine from q2trek/q2pro.
+This is q2trek/opentdm. Its `tickrate` branch is upstream `master` plus the tick rate commits, which keep gameplay consistent across server frame rates, and `master` follows upstream unchanged. OpenTDM always supports variable server FPS, so you only set `sv_fps` (see Server CVARs) on an engine built with variable FPS (Q2PRO nightly builds are). Without it the game runs at 10 Hz. For exact frame timing at 30 and 60 Hz, run it on the engine from q2trek/q2pro. The tests for these commits, at every rate from 10 to 60 Hz, are in [q2trek/tickrate-tests](https://github.com/q2trek/tickrate-tests).
 
 What the branch changes:
 
