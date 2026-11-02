@@ -1755,6 +1755,7 @@ void ClientThink(edict_t *ent, usercmd_t *ucmd) {
     edict_t *other;
     int i, j;
     pmove_t pm;
+    qboolean new_attack;
 
     level.current_entity = ent;
     client = ent->client;
@@ -1900,6 +1901,9 @@ void ClientThink(edict_t *ent, usercmd_t *ucmd) {
         client->last_activity_frame = level.framenum;
     }
 
+    // this usercmd latches a fresh press (one not already carried in latched_buttons)
+    new_attack = !(client->latched_buttons & BUTTON_ATTACK);
+
     client->oldbuttons = client->buttons;
     client->buttons = ucmd->buttons;
     client->latched_buttons |= client->buttons & ~client->oldbuttons;
@@ -1933,6 +1937,9 @@ void ClientThink(edict_t *ent, usercmd_t *ucmd) {
                 client->weapon_thunk = true;
                 client->attack_pending = true;
                 Think_Weapon(ent);
+            } else if (new_attack) {
+                // Think_Weapon was already called this frame: the next weapon step sees the press
+                client->attack_pending = true;
             }
         }
     }

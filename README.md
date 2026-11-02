@@ -22,6 +22,7 @@ The same code also changes a few things at 10 Hz:
 - A player on a mover keeps it as ground in frames without a usercmd.
 - When more than 64 crush pairs (source and victim) are active within 0.1 s, a second source crushing the same victim in that time loses its hit.
 - Fire released during a timeout no longer shoots once more when the match resumes.
+- A second attack tap in one packet, after the first already fired, fires on the next weapon step instead of being lost.
 
 ## Client Commands
 `commands` Show available commands
