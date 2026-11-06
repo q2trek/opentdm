@@ -929,7 +929,7 @@ void T_Damage(edict_t *targ, edict_t *inflictor, edict_t *attacker, vec3_t dir,
 void T_RadiusDamage(edict_t *inflictor, edict_t *attacker, float damage, edict_t *ignore, float radius, int mod);
 
 // g_main.c
-void EndDMLevel(void);
+void EndDMLevel(const char *map);
 
 // damage flags
 #define DAMAGE_RADIUS              0x00000001  // damage was indirect
