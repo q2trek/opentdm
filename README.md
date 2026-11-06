@@ -3,9 +3,9 @@
 OpenTDM is an open source team deathmatch and duel mod for Quake II. Origially written by r1ch
 
 ## Tick rates from 10 to 60 Hz in this fork
-This is q2trek/opentdm. Its `tickrate` branch is upstream `master` plus the tick rate commits, which keep gameplay consistent across server frame rates, and `master` follows upstream unchanged. OpenTDM always supports variable server FPS, so you only set `sv_fps` (see Server CVARs) on an engine built with variable FPS (Q2PRO nightly builds are). Without it the game runs at 10 Hz. For exact frame timing at 30 and 60 Hz, run it on the engine from q2trek/q2pro. The tests for these commits, at every rate from 10 to 60 Hz, are in [q2trek/tickrate-tests](https://github.com/q2trek/tickrate-tests).
+This is q2trek/opentdm. Its `master` branch is upstream `master` plus the tick rate commits, which keep gameplay consistent across server frame rates (also kept on the `tickrate` branch), and the bug fixes listed below. OpenTDM always supports variable server FPS, so you only set `sv_fps` (see Server CVARs) on an engine built with variable FPS (Q2PRO nightly builds are). Without it the game runs at 10 Hz. For exact frame timing at 30 and 60 Hz, run it on the engine from q2trek/q2pro. The tests for these commits, at every rate from 10 to 60 Hz, are in [q2trek/tickrate-tests](https://github.com/q2trek/tickrate-tests).
 
-What the branch changes:
+What the tick rate commits change:
 
 - Crush damage from doors, plats, rotating brushes and func_object hits a victim at most once per 0.1 s from each source.
 - Movers carry their 1/8 unit rounding remainder into the next move, so they keep the right speed and stay on their path.
@@ -23,6 +23,14 @@ The same code also changes a few things at 10 Hz:
 - When more than 64 crush pairs (source and victim) are active within 0.1 s, a second source crushing the same victim in that time loses its hit.
 - Fire released during a timeout no longer shoots once more when the match resumes and no usercmd arrives before the next weapon step (lag, packet loss).
 - A second attack tap in one packet, after the first already fired, fires on the next weapon step instead of being lost.
+
+Bug fixes on `master` (each also on its own `fix-*` branch):
+
+- `sv_fps` 0 or below is refused like any other invalid rate, instead of making the frame time 1/0.
+- A timeout called in sudden death holds. Before, with `g_tie_mode 2` the game resumed on the next frame.
+- `maplist` answers "maplist is undefined on this server." when `g_maplistfile` names a missing or empty file, instead of crashing the server.
+- A config file name with characters other than letters, digits, `_`, `-` and `.` in `configs/` is skipped, instead of hanging the server at startup.
+- `changemap` and a passed map vote go to the picked map, even with `DF_SAME_LEVEL` set or the current map in `sv_maplist`. The time limit and frag limit keep the old order.
 
 ## Client Commands
 `commands` Show available commands
