@@ -62,6 +62,11 @@ void P_DamageFeedback(edict_t *player) {
     static vec3_t acolor = { 1.0, 1.0, 1.0 };
     static vec3_t bcolor = { 1.0, 0.0, 0.0 };
 
+    // feedback of the damage totals of a whole 100 ms
+    if (!FRAMESYNC) {
+        return;
+    }
+
     client = player->client;
 
     // flash the backgrounds behind the status numbers
@@ -222,7 +227,7 @@ void SV_CalcViewOffset(edict_t *ent) {
         ent->client->ps.viewangles[YAW] = ent->client->killer_yaw;
     } else {
         // add angles based on weapon kick
-        if ((level.framenum % (int) (0.1f * SERVER_FPS)) == 0) {
+        if (FRAMESYNC) {
             VectorCopy(ent->client->kick_angles, angles);
 
             // add angles based on damage kick
@@ -325,6 +330,11 @@ void SV_CalcGunOffset(edict_t *ent) {
     int i;
     float delta;
 
+    // held between the 100 ms frames, delta movement is over 100 ms
+    if (!FRAMESYNC) {
+        return;
+    }
+
     // gun angles from bobbing
     ent->client->ps.gunangles[ROLL] = xyspeed * bobfracsin * 0.005f;
     ent->client->ps.gunangles[YAW] = xyspeed * bobfracsin * 0.01f;
@@ -391,6 +401,8 @@ void SV_CalcBlend(edict_t *ent) {
     int contents;
     vec3_t vieworg;
     int remaining;
+    // the game clock is frozen in a timeout: warn once, when it runs again
+    qboolean warn = tdm_match_status != MM_TIMEOUT;
 
     ent->client->ps.blend[0] = ent->client->ps.blend[1] =
             ent->client->ps.blend[2] = ent->client->ps.blend[3] = 0;
@@ -415,7 +427,7 @@ void SV_CalcBlend(edict_t *ent) {
     // add for powerups
     if (ent->client->quad_framenum > level.framenum) {
         remaining = ent->client->quad_framenum - level.framenum;
-        if (remaining == SECS_TO_FRAMES(3)) {    // beginning to fade
+        if (warn && remaining == SECS_TO_FRAMES(3)) {    // beginning to fade
             gi.sound(ent, CHAN_ITEM, gi.soundindex("items/damage2.wav"), 1,
                     ATTN_NORM, 0);
         }
@@ -425,7 +437,7 @@ void SV_CalcBlend(edict_t *ent) {
         }
     } else if (ent->client->invincible_framenum > level.framenum) {
         remaining = ent->client->invincible_framenum - level.framenum;
-        if (remaining == SECS_TO_FRAMES(3)) {   // beginning to fade
+        if (warn && remaining == SECS_TO_FRAMES(3)) {   // beginning to fade
             gi.sound(ent, CHAN_ITEM, gi.soundindex("items/protect2.wav"), 1,
                     ATTN_NORM, 0);
         }
@@ -435,7 +447,7 @@ void SV_CalcBlend(edict_t *ent) {
         }
     } else if (ent->client->enviro_framenum > level.framenum) {
         remaining = ent->client->enviro_framenum - level.framenum;
-        if (remaining == SECS_TO_FRAMES(3)) {   // beginning to fade
+        if (warn && remaining == SECS_TO_FRAMES(3)) {   // beginning to fade
             gi.sound(ent, CHAN_ITEM, gi.soundindex("items/airout.wav"), 1,
                     ATTN_NORM, 0);
         }
@@ -445,7 +457,7 @@ void SV_CalcBlend(edict_t *ent) {
         }
     } else if (ent->client->breather_framenum > level.framenum) {
         remaining = ent->client->breather_framenum - level.framenum;
-        if (remaining == SECS_TO_FRAMES(3)) {   // beginning to fade
+        if (warn && remaining == SECS_TO_FRAMES(3)) {   // beginning to fade
             gi.sound(ent, CHAN_ITEM, gi.soundindex("items/airout.wav"), 1,
                     ATTN_NORM, 0);
         }
@@ -548,7 +560,8 @@ void P_FallingDamage(edict_t *ent) {
                         0);
             }
         }
-        ent->pain_debounce_framenum = level.framenum;	// no normal pain sound
+        // no normal pain sound (the feedback of this 100 ms)
+        ent->pain_debounce_framenum = level.framenum + SECS_TO_FRAMES(0.1f) - 1;
         damage = (delta - 30) / 2;
         if (damage < 1) {
             damage = 1;
@@ -677,7 +690,8 @@ void P_WorldEffects(void) {
                             1, ATTN_NORM, 0);
                 }
 
-                current_player->pain_debounce_framenum = level.framenum;
+                current_player->pain_debounce_framenum = level.framenum
+                        + SECS_TO_FRAMES(0.1f) - 1;
 
                 T_Damage(current_player, world, world, vec3_origin,
                         current_player->s.origin, vec3_origin,
@@ -703,15 +717,15 @@ void P_WorldEffects(void) {
                 } else {
                     gi.sound(current_player, CHAN_VOICE,
                             gi.soundindex("player/burn2.wav"), 1, ATTN_NORM, 0);
+                }
                 current_player->pain_debounce_framenum = level.framenum
                         + SECS_TO_FRAMES(1);
-                }
             }
 
             //FIXME: ugly hack to a void sizzle damage being multiplied based
             // on server framenum, can be biased depending on what frame the
             // client entered the volume
-            if ((level.framenum % (int) (0.1f * SERVER_FPS)) == 0) {
+            if (FRAMESYNC) {
                 if (envirosuit) {    // take 1/3 damage with envirosuit
                     T_Damage(current_player, world, world, vec3_origin,
                             current_player->s.origin, vec3_origin,
@@ -729,7 +743,7 @@ void P_WorldEffects(void) {
             if (!envirosuit) {
                 //FIXME: ugly hack to a void sizzle damage being multiplied based on server framenum, can be biased depending on what
                 //frame the client entered the volume
-                if ((level.framenum % (int) (0.1f * SERVER_FPS)) == 0) {
+                if (FRAMESYNC) {
                     T_Damage(current_player, world, world, vec3_origin,
                             current_player->s.origin, vec3_origin,
                             1 * waterlevel, 0, 0, MOD_SLIME);
@@ -997,6 +1011,8 @@ void ClientEndServerFrame(edict_t *ent) {
         } else {
             bobmove = 0.0625f;
         }
+    } else {
+        bobmove = 0;
     }
 
     bobmove *= (10.0f / (1 * SERVER_FPS));
@@ -1071,7 +1087,9 @@ void ClientEndServerFrame(edict_t *ent) {
     }
 
     VectorCopy(ent->velocity, ent->client->oldvelocity);
-    VectorCopy(ent->client->ps.viewangles, ent->client->oldviewangles);
+    if (FRAMESYNC) {
+        VectorCopy(ent->client->ps.viewangles, ent->client->oldviewangles);
+    }
 
     // clear weapon kicks
     VectorClear(ent->client->kick_angles);

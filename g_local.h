@@ -219,6 +219,8 @@ extern int      SERVER_FPS;
 //define for variable frametime support
 #define SECS_TO_FRAMES(seconds)     (int)((seconds)* SERVER_FPS)
 #define FRAMES_TO_SECS(frames)      (int)((frames) * FRAMETIME)
+// first real frame of each 100 ms; real frames keep running in a timeout
+#define FRAMESYNC                   ((level.realframenum % (int)(0.1f * SERVER_FPS)) == 0)
 
 // memory tags to allow dynamic memory to be cleaned up
 #define TAG_GAME            765  // clear when unloading the dll
