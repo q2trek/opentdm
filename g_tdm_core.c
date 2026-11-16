@@ -3318,14 +3318,16 @@ void TDM_RandomizeTeams(void) {
  */
 int TDM_PingHandicap(int ping) {
     int handi = (int) g_ping_handicap->value;
+    int tick;
 
     if (handi < 1) {
         return ping;
     }
 
-    // add some fake jitter
-    if (level.framenum % 4 == 0) {
-        if (level.framenum % 8 == 0) {
+    // add some fake jitter, on a 10 Hz-equivalent counter
+    tick = level.framenum / SECS_TO_FRAMES(0.1f);
+    if (tick % 4 == 0) {
+        if (tick % 8 == 0) {
             handi += 3;
         } else {
             handi -= 2;

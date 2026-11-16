@@ -2071,7 +2071,7 @@ void TDM_Ghost_f(edict_t *ent) {
     }
 
     code = strtoul(gi.args(), NULL, 0);
-    if (TDM_RateLimited(ent, 2)) {
+    if (TDM_RateLimited(ent, SECS_TO_FRAMES(0.2f))) {
         return;
     }
 
