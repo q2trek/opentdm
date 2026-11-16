@@ -7,6 +7,11 @@ This is q2trek/opentdm. Its `master` branch is upstream `master` plus the tick r
 
 What the tick rate commits change:
 
+- On an engine without variable FPS, ignore a configured `sv_fps` and keep the game at 10 Hz. On a capable engine, latch the configured rate and reject values outside 10, 20, 30, 40, 50 and 60.
+- The `ghost` command rate limit stays at 200 ms and the fake ping jitter follows its original 10 Hz pattern at every server rate.
+- View kicks, damage feedback, gun sway and lava/slime damage use a 100 ms grid on the real frame counter. Feedback batches a whole window, while gun angles and their view history are held between windows. World damage stays disabled during a timeout and resumes on the real grid afterwards.
+- Airborne players stop bobbing, either burn sound starts the same cooldown, and fall/drowning sounds suppress normal pain feedback for the whole window. Powerup fade warnings wait until a timeout ends instead of repeating on the frozen match clock.
+
 - Crush damage from doors, plats, rotating brushes and func_object hits a victim at most once per 0.1 s from each source.
 - Movers carry their 1/8 unit rounding remainder into the next move, so they keep the right speed and stay on their path.
 - Accelerated doors and plats finish their last step over 100 ms instead of in one world frame.
