@@ -13,6 +13,14 @@ typedef struct {
     bool log;
 } unlag_shot_t;
 
+typedef struct {
+    int count;
+    struct {
+        edict_t *ent;
+        int solid;
+    } passed[MAX_EDICTS];
+} unlag_rail_t;
+
 #ifdef USE_UNLAG
 typedef struct {
     int frame;
@@ -31,6 +39,8 @@ unlag_shot_t G_UnlagBeginShot(edict_t *ent);
 void G_UnlagEndShot(edict_t *ent, const unlag_shot_t *shot);
 trace_t G_UnlagTrace(unlag_shot_t *shot, edict_t *shooter, vec3_t start,
                      vec3_t end, edict_t *ignore, int mask, vec3_t damage_point);
+trace_t G_UnlagRailTrace(unlag_shot_t *shot, unlag_rail_t *rail, edict_t *shooter,
+                         vec3_t start, vec3_t end, edict_t *ignore, int mask, vec3_t damage_point);
 #else
 #define G_UnlagInit() ((void)0)
 #define G_UnlagShutdown() ((void)0)
@@ -48,6 +58,8 @@ static inline trace_t G_UnlagTrace(unlag_shot_t *shot, edict_t *shooter, vec3_t 
     VectorCopy(tr.endpos, damage_point);
     return tr;
 }
+#define G_UnlagRailTrace(shot, rail, shooter, start, end, ignore, mask, point) \
+    G_UnlagTrace(shot, shooter, start, end, ignore, mask, point)
 #endif
 
 #endif

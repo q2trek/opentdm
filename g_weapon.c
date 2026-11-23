@@ -616,6 +616,10 @@ void fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick,
     edict_t *ignore;
     int mask;
     qboolean water;
+#ifdef USE_UNLAG
+    unlag_rail_t rail;
+    rail.count = 0;
+#endif
 
     TDM_BeginDamage();
 
@@ -625,7 +629,7 @@ void fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick,
     water = false;
     mask = MASK_SHOT | CONTENTS_SLIME | CONTENTS_LAVA;
     while (ignore) {
-        tr = G_UnlagTrace(shot, self, from, end, ignore, mask, damage_point);
+        tr = G_UnlagRailTrace(shot, &rail, self, from, end, ignore, mask, damage_point);
 
         if (tr.contents & (CONTENTS_SLIME | CONTENTS_LAVA)) {
             mask &= ~(CONTENTS_SLIME | CONTENTS_LAVA);

@@ -250,3 +250,24 @@ trace_t G_UnlagTrace(unlag_shot_t *shot, edict_t *shooter, vec3_t start,
     }
     return tr;
 }
+
+trace_t G_UnlagRailTrace(unlag_shot_t *shot, unlag_rail_t *rail, edict_t *shooter,
+                         vec3_t start, vec3_t end, edict_t *ignore, int mask, vec3_t damage_point)
+{
+    if (!shot->rewind)
+        return G_UnlagTrace(shot, shooter, start, end, ignore, mask, damage_point);
+
+    if (ignore != shooter && (!rail->count || rail->passed[rail->count - 1].ent != ignore))
+        rail->passed[rail->count++].ent = ignore;
+
+    /* A continued ray can still start in front of any of the earlier entry planes. */
+    for (int i = 0; i < rail->count; i++) {
+        edict_t *ent = rail->passed[i].ent;
+        rail->passed[i].solid = ent->solid;
+        ent->solid = SOLID_NOT;
+    }
+    trace_t tr = G_UnlagTrace(shot, shooter, start, end, ignore, mask, damage_point);
+    for (int i = 0; i < rail->count; i++)
+        rail->passed[i].ent->solid = rail->passed[i].solid;
+    return tr;
+}

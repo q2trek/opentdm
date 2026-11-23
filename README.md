@@ -26,6 +26,8 @@ What the tick rate commits change:
 
 - Hitscan lag compensation is off by default (`g_unlag 0`). When enabled on a compatible server, it covers rail shots, bullets and shotgun pellets. Projectiles, BFG beams, doors and lifts use the current world.
 
+- Compensated rail shots continue past players they have already hit.
+
 The same code also changes a few things at 10 Hz:
 
 - The trigger_hurt sound plays on the first contact, and for a trigger_hurt with the SLOW flag on every hit, instead of only on frames divisible by 10.
