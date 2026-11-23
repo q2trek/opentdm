@@ -668,8 +668,9 @@ void P_WorldEffects(void) {
         if (current_player->air_finished_framenum < level.framenum) {// drown!
             if (current_player->client->next_drown_framenum < level.framenum
                     && current_player->health > 0) {
+                // Preserve the 1.1 s gap imposed by the exclusive 10 Hz deadline.
                 current_player->client->next_drown_framenum = level.framenum
-                        + SECS_TO_FRAMES(1);
+                        + SECS_TO_FRAMES(1) + SECS_TO_FRAMES(0.1f) - 1;
 
                 // take more damage the longer underwater
                 current_player->dmg += 2;

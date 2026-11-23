@@ -28,6 +28,8 @@ What the tick rate commits change:
 
 - Compensated rail shots continue past players they have already hit.
 
+- Drowning damage repeats every 1.1 seconds at every supported server rate.
+
 The same code also changes a few things at 10 Hz:
 
 - The trigger_hurt sound plays on the first contact, and for a trigger_hurt with the SLOW flag on every hit, instead of only on frames divisible by 10.
