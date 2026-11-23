@@ -19,7 +19,7 @@ What the tick rate commits change:
 - An attack tap between two 100 ms weapon steps fires on the next step instead of being lost.
 - Fire released during a timeout stays released when the match resumes.
 - The `players` connect time, the intermission screenshot delay, the HUD clocks, the trigger_hurt damage and sound, the first BFG laser, the BFG explosion, the point the BFG explosion hurts from and the roll of a falling viper bomb are timed in seconds, not frames.
-- Grenades and dropped items check moving platform support every 100 ms, avoiding repeated impacts at higher rates.
+- Grenades and dropped items check moving platform support every 100 ms, avoiding repeated impacts at higher rates. Support from a player is checked every world frame.
 - Camera kicks from falling, damage and firing the BFG decay during a timeout.
 - The crush limiter logs the first overflow of its 64-pair table and reports the total at map change or shutdown.
 - Above 10 Hz, launcher grenades, hand grenades and dropped items follow the classic 10 Hz arc. After a bounce, the object stays at the impact point until the end of the 100 ms step.
