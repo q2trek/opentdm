@@ -22,6 +22,7 @@ What the tick rate commits change:
 - Grenades and dropped items check moving platform support every 100 ms, avoiding repeated impacts at higher rates.
 - Camera kicks from falling, damage and firing the BFG decay during a timeout.
 - The crush limiter logs the first overflow of its 64-pair table and reports the total at map change or shutdown.
+- Above 10 Hz, launcher grenades, hand grenades and dropped items follow the classic 10 Hz arc. After a bounce, the object stays at the impact point until the end of the 100 ms step.
 
 The same code also changes a few things at 10 Hz:
 

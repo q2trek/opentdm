@@ -1738,6 +1738,11 @@ struct edict_s {
     edict_t     *activator;
     edict_t     *groundentity;
     int         groundentity_linkcount;
+    int         toss_phase;         // world frames already advanced in the classic toss step
+    qboolean    toss_hold;          // wait in place after a bounce until the classic step ends
+    vec3_t      toss_end;
+    vec3_t      toss_origin;
+    vec3_t      toss_velocity;
     int         crush_framenum;     // G_CrushAllowed on a full table: next damage frame of this victim
     edict_t     *teamchain;
     edict_t     *teammaster;

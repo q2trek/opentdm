@@ -1011,6 +1011,8 @@ void CopyToBodyQue(edict_t *ent) {
     body->clipmask = ent->clipmask;
     body->owner = ent->owner;
     body->movetype = ent->movetype;
+    body->toss_phase = 0;
+    body->toss_hold = false;
     body->groundentity = ent->groundentity;
     body->die = body_die;
     body->takedamage = DAMAGE_YES;
