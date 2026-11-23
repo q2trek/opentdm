@@ -1554,9 +1554,9 @@ struct gclient_s {
     unsigned       kick_origin_start;
     unsigned       kick_origin_end;
     float          v_dmg_roll, v_dmg_pitch;  // damage kicks
-    int            v_dmg_framenum;
+    int            v_dmg_framenum;  // deadline on level.realframenum, including timeouts
     float          fall_value;      // for view drop on fall
-    int            fall_framenum;
+    int            fall_framenum;   // deadline on level.realframenum, including timeouts
     float          damage_alpha;
     float          bonus_alpha;
     vec3_t         damage_blend;

@@ -1405,7 +1405,7 @@ void weapon_bfg_fire(edict_t *ent) {
     // make a big pitch kick with an inverse fall
     ent->client->v_dmg_pitch = -40;
     ent->client->v_dmg_roll = crandom() * 8;
-    ent->client->v_dmg_framenum = level.framenum + DAMAGE_FRAMES;
+    ent->client->v_dmg_framenum = level.realframenum + DAMAGE_FRAMES;
 
     VectorSet(offset, 8, 8, ent->viewheight - 8);
     P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);

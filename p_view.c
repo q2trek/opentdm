@@ -180,7 +180,7 @@ void P_DamageFeedback(edict_t *player) {
         client->v_dmg_roll = kick * side * 0.3f;
         side = -DotProduct(v, forward);
         client->v_dmg_pitch = kick * side * 0.3f;
-        client->v_dmg_framenum = level.framenum + DAMAGE_FRAMES;
+        client->v_dmg_framenum = level.realframenum + DAMAGE_FRAMES;
     }
 
     // clear totals
@@ -231,7 +231,7 @@ void SV_CalcViewOffset(edict_t *ent) {
             VectorCopy(ent->client->kick_angles, angles);
 
             // add angles based on damage kick
-            ratio = (ent->client->v_dmg_framenum - level.framenum)
+            ratio = (ent->client->v_dmg_framenum - level.realframenum)
                     / (float) DAMAGE_FRAMES;
             if (ratio < 0) {
                 ratio = 0;
@@ -243,7 +243,7 @@ void SV_CalcViewOffset(edict_t *ent) {
 
             // add pitch based on fall kick
 
-            ratio = (ent->client->fall_framenum - level.framenum)
+            ratio = (ent->client->fall_framenum - level.realframenum)
                     / (float) FALL_FRAMES;
             if (ratio < 0) {
                 ratio = 0;
@@ -286,7 +286,7 @@ void SV_CalcViewOffset(edict_t *ent) {
     v[2] += ent->viewheight;
 
     // add fall height
-    ratio = (ent->client->fall_framenum - level.framenum) / (float) FALL_FRAMES;
+    ratio = (ent->client->fall_framenum - level.realframenum) / (float) FALL_FRAMES;
     if (ratio < 0) {
         ratio = 0;
     }
@@ -548,7 +548,7 @@ void P_FallingDamage(edict_t *ent) {
         ent->client->fall_value = 40;
     }
 
-    ent->client->fall_framenum = level.framenum + FALL_FRAMES;
+    ent->client->fall_framenum = level.realframenum + FALL_FRAMES;
 
     if (delta > 30) {
         if (ent->health > 0) {
