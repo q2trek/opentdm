@@ -495,7 +495,7 @@ void G_RunFrame(void) {
                     } else {
                         ent->groundentity = NULL;
                     }
-                } else {
+                } else if (FRAMESYNC) {
                     ent->groundentity = NULL;
                 }
             }

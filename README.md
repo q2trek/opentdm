@@ -19,6 +19,7 @@ What the tick rate commits change:
 - An attack tap between two 100 ms weapon steps fires on the next step instead of being lost.
 - Fire released during a timeout stays released when the match resumes.
 - The `players` connect time, the intermission screenshot delay, the HUD clocks, the trigger_hurt damage and sound, the first BFG laser, the BFG explosion, the point the BFG explosion hurts from and the roll of a falling viper bomb are timed in seconds, not frames.
+- Grenades and dropped items check moving platform support every 100 ms, avoiding repeated impacts at higher rates.
 
 The same code also changes a few things at 10 Hz:
 
