@@ -116,7 +116,6 @@ unlag_shot_t G_UnlagBeginShot(edict_t *ent)
     shot.estimate_age = frame - slot->command_frame;
     shot.age = min(shot.estimate_age, limit);
     shot.frame = frame - shot.age;
-    shot.rewind = shot.age > 0;
     return shot;
 }
 
@@ -234,7 +233,7 @@ static void UnlagDamagePoint(vec3_t point, const edict_t *ent, const unlag_pose_
 trace_t G_UnlagTrace(unlag_shot_t *shot, edict_t *shooter, vec3_t start,
                      vec3_t end, edict_t *ignore, int mask, vec3_t damage_point)
 {
-    if (!shot->rewind) {
+    if (shot->age <= 0) {
         trace_t tr = gi.trace(start, NULL, NULL, end, ignore, mask);
         VectorCopy(tr.endpos, damage_point);
         return tr;
@@ -258,7 +257,7 @@ trace_t G_UnlagTrace(unlag_shot_t *shot, edict_t *shooter, vec3_t start,
 trace_t G_UnlagRailTrace(unlag_shot_t *shot, unlag_rail_t *rail, edict_t *shooter,
                          vec3_t start, vec3_t end, edict_t *ignore, int mask, vec3_t damage_point)
 {
-    if (!shot->rewind)
+    if (shot->age <= 0)
         return G_UnlagTrace(shot, shooter, start, end, ignore, mask, damage_point);
 
     if (ignore != shooter && (!rail->count || rail->passed[rail->count - 1].ent != ignore))

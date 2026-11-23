@@ -8,7 +8,6 @@ typedef struct {
     int hits;
     int estimate_age;
     int age;
-    bool rewind;
     bool estimated;
     bool log;
 } unlag_shot_t;
