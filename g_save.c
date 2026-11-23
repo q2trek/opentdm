@@ -365,6 +365,10 @@ void InitGame(void) {
     game.clients = gi.TagMalloc(game.maxclients * sizeof(game.clients[0]),
             TAG_GAME);
     globals.num_edicts = game.maxclients + 1;
+    G_UnlagInit();
+#ifdef USE_UNLAG
+    gi.dprintf("OpenTDM: " UNLAG_API_V1 " %s\n", unlag_api ? "available" : "unavailable");
+#endif
 
     // game/server feature support - export what we support and read what the server supports
 

@@ -93,11 +93,11 @@ qboolean fire_hit(edict_t *self, vec3_t aim, int damage, int kick) {
  * This is an internal support routine used for bullet/pellet based weapons.
  */
 static void fire_lead(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
-        int kick, int te_impact, int hspread, int vspread, int mod) {
+        int kick, int te_impact, int hspread, int vspread, int mod, unlag_shot_t *shot) {
     trace_t tr;
     vec3_t dir;
     vec3_t forward, right, up;
-    vec3_t end;
+    vec3_t end, damage_point;
     float r;
     float u;
     vec3_t water_start;
@@ -105,6 +105,7 @@ static void fire_lead(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
     int content_mask = MASK_SHOT | MASK_WATER;
 
     tr = gi.trace(self->s.origin, NULL, NULL, start, self, MASK_SHOT);
+    VectorCopy(tr.endpos, damage_point);
     if (!(tr.fraction < 1.0f)) {
         vectoangles(aimdir, dir);
         AngleVectors(dir, forward, right, up);
@@ -121,7 +122,7 @@ static void fire_lead(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
             content_mask &= ~MASK_WATER;
         }
 
-        tr = gi.trace(start, NULL, NULL, end, self, content_mask);
+        tr = G_UnlagTrace(shot, self, start, end, self, content_mask, damage_point);
 
         // see if we hit water
         if (tr.contents & MASK_WATER) {
@@ -167,7 +168,7 @@ static void fire_lead(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
             }
 
             // re-trace ignoring water this time
-            tr = gi.trace(water_start, NULL, NULL, end, self, MASK_SHOT);
+            tr = G_UnlagTrace(shot, self, water_start, end, self, MASK_SHOT, damage_point);
         }
     }
 
@@ -175,7 +176,7 @@ static void fire_lead(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
     if (!((tr.surface) && (tr.surface->flags & SURF_SKY))) {
         if (tr.fraction < 1.0f) {
             if (tr.ent->takedamage) {
-                T_Damage(tr.ent, self, self, aimdir, tr.endpos, tr.plane.normal,
+                T_Damage(tr.ent, self, self, aimdir, damage_point, tr.plane.normal,
                         damage, kick, DAMAGE_BULLET, mod);
             } else {
                 if (strncmp(tr.surface->name, "sky", 3) != 0) {
@@ -218,10 +219,10 @@ static void fire_lead(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
  * pistols, rifles, etc....
  */
 void fire_bullet(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
-        int kick, int hspread, int vspread, int mod) {
+        int kick, int hspread, int vspread, int mod, unlag_shot_t *shot) {
     TDM_BeginDamage();
     fire_lead(self, start, aimdir, damage, kick, TE_GUNSHOT, hspread, vspread,
-            mod);
+            mod, shot);
     TDM_EndDamage();
 }
 
@@ -229,12 +230,12 @@ void fire_bullet(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
  * Shoots shotgun pellets.  Used by shotgun and super shotgun.
  */
 void fire_shotgun(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
-        int kick, int hspread, int vspread, int count, int mod) {
+        int kick, int hspread, int vspread, int count, int mod, unlag_shot_t *shot) {
     int i;
 
     for (i = 0; i < count; i++) {
         fire_lead(self, start, aimdir, damage, kick, TE_SHOTGUN, hspread,
-                vspread, mod);
+                vspread, mod, shot);
     }
 }
 
@@ -608,9 +609,9 @@ void fire_rocket(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed,
 /**
  * fire_rail
  */
-void fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick) {
+void fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, unlag_shot_t *shot) {
     vec3_t from;
-    vec3_t end;
+    vec3_t end, damage_point;
     trace_t tr;
     edict_t *ignore;
     int mask;
@@ -624,7 +625,7 @@ void fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick)
     water = false;
     mask = MASK_SHOT | CONTENTS_SLIME | CONTENTS_LAVA;
     while (ignore) {
-        tr = gi.trace(from, NULL, NULL, end, ignore, mask);
+        tr = G_UnlagTrace(shot, self, from, end, ignore, mask, damage_point);
 
         if (tr.contents & (CONTENTS_SLIME | CONTENTS_LAVA)) {
             mask &= ~(CONTENTS_SLIME | CONTENTS_LAVA);
@@ -638,7 +639,7 @@ void fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick)
             }
 
             if ((tr.ent != self) && (tr.ent->takedamage)) {
-                T_Damage(tr.ent, self, self, aimdir, tr.endpos, tr.plane.normal,
+                T_Damage(tr.ent, self, self, aimdir, damage_point, tr.plane.normal,
                         damage, kick, 0, MOD_RAILGUN);
             }
         }

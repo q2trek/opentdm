@@ -435,6 +435,7 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker,
     self->svflags |= SVF_DEADMONSTER;
 
     if (!self->deadflag) {
+        G_UnlagNewLife(self);
         self->client->respawn_framenum = level.framenum
                 + SECS_TO_FRAMES(g_respawn_time->value);
         LookAtKiller(self, inflictor, attacker);
@@ -1073,6 +1074,7 @@ void PutClientInServer(edict_t *ent) {
     // do it before setting health back up, so farthest
     // ranging doesn't count this client
     SelectSpawnPoint(ent, spawn_origin, spawn_angles);
+    G_UnlagNewLife(ent);
     index = ent - g_edicts - 1;
     client = ent->client;
 
@@ -1578,6 +1580,7 @@ qboolean ClientConnect(edict_t *ent, char *ui) {
     }
 
     // they can connect
+    G_UnlagNewLife(ent);
     ent->client = game.clients + (ent - g_edicts - 1);
 
     //possible new client taking the place of a non-clean disconnect, clean up if so
@@ -1612,6 +1615,8 @@ void ClientDisconnect(edict_t *ent) {
     if (!ent->client) {
         return;
     }
+
+    G_UnlagNewLife(ent);
 
     // send effect (only if they were in game)
     if (ent->client->pers.team && ent->inuse) {
@@ -1761,6 +1766,7 @@ void ClientThink(edict_t *ent, usercmd_t *ucmd) {
 
     level.current_entity = ent;
     client = ent->client;
+    G_UnlagCommand(ent);
 
     //no movement during map or match intermission
     if (tdm_match_status == MM_SCOREBOARD

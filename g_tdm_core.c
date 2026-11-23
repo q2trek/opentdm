@@ -158,7 +158,7 @@ void TDM_SetFrameTime(void) {
         SERVER_FPS = (int) sv_fps->value;
     }
 
-    if (SERVER_FPS < 10 || SERVER_FPS % 10 != 0 || SERVER_FPS > 60) {
+    if (SERVER_FPS < 10 || SERVER_FPS % 10 != 0 || SERVER_FPS > UNLAG_MAX_FPS) {
         gi.error("Invalid server FPS");
     }
 
@@ -201,6 +201,8 @@ void TDM_ResetLevel(void) {
     if (!level.entity_string) {
         return;
     }
+
+    G_UnlagClear();
 
     // free up any stray ents
     FOREACH_NONPLAYER_ENTITY(ent) {

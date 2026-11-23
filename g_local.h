@@ -28,6 +28,30 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	GAME_INCLUDE
 #include "game.h"
 
+#define UNLAG_MAX_FPS 60
+
+#ifdef USE_UNLAG
+#define UNLAG_ACTIVE_PLAYER(ent) ((ent)->client->pers.connected && (ent)->client->pers.team != TEAM_SPEC)
+#ifndef min
+#define min(a, b) ((a) < (b) ? (a) : (b))
+#endif
+#ifndef max
+#define max(a, b) ((a) > (b) ? (a) : (b))
+#endif
+#define q_gameabi IMPORT
+typedef int qhandle_t;
+/* Use the API 3 entity layout even when the engine enables protocol extensions. */
+#pragma push_macro("USE_PROTOCOL_EXTENSIONS")
+#undef USE_PROTOCOL_EXTENSIONS
+#define USE_PROTOCOL_EXTENSIONS 0
+#include "gameext.h"
+#pragma pop_macro("USE_PROTOCOL_EXTENSIONS")
+#include "unlag.h"
+extern const game_import_ex_t *unlag_game_ex;
+extern const unlag_api_v1_t *unlag_api;
+DLL_EXPORT const game_export_ex_t *GetGameAPIEx(const game_import_ex_t *import);
+#endif
+
 // the "gameversion" client command will print this plus compile date
 #define	GAMEVERSION	"OpenTDM"
 
@@ -962,10 +986,12 @@ qboolean visible(edict_t *self, edict_t *other, int mask);
 // g_weapon.c
 void ThrowDebris(edict_t *self, char *modelname, float speed, vec3_t origin);
 qboolean fire_hit(edict_t *self, vec3_t aim, int damage, int kick);
+#include "g_unlag.h"
+
 void fire_bullet(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
-        int kick, int hspread, int vspread, int mod);
+        int kick, int hspread, int vspread, int mod, unlag_shot_t *shot);
 void fire_shotgun(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
-        int kick, int hspread, int vspread, int count, int mod);
+        int kick, int hspread, int vspread, int count, int mod, unlag_shot_t *shot);
 void fire_blaster(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
         int speed, int effect, qboolean hyper);
 void fire_grenade(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
@@ -975,7 +1001,7 @@ void fire_grenade2(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
 void fire_rocket(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed,
         float damage_radius, int radius_damage);
 void fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
-        int kick);
+        int kick, unlag_shot_t *shot);
 void fire_bfg(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed,
         float damage_radius);
 

@@ -19,6 +19,7 @@
  */
 
 #include "g_local.h"
+#include <stddef.h>
 
 game_locals_t game;
 level_locals_t level;
@@ -188,6 +189,7 @@ void ShutdownGame(void) {
     gi.dprintf("==== ShutdownGame ====\n");
     G_ReportCrushOverflow();
     gi.cvar_forceset("g_features", "0");
+    G_UnlagShutdown();
     gi.FreeTags(TAG_LEVEL);
     gi.FreeTags(TAG_GAME);
 }
@@ -198,6 +200,10 @@ void ShutdownGame(void) {
  */
 DLL_EXPORT game_export_t* GetGameAPI(game_import_t *import) {
     gi = *import;
+#ifdef USE_UNLAG
+    unlag_game_ex = NULL;
+    unlag_api = NULL;
+#endif
     globals.apiversion = GAME_API_VERSION;
     globals.Init = InitGame;
     globals.Shutdown = ShutdownGame;
@@ -217,6 +223,24 @@ DLL_EXPORT game_export_t* GetGameAPI(game_import_t *import) {
     globals.edict_size = sizeof(edict_t);
     return &globals;
 }
+
+#ifdef USE_UNLAG
+const game_import_ex_t *unlag_game_ex;
+const unlag_api_v1_t *unlag_api;
+
+DLL_EXPORT const game_export_ex_t *GetGameAPIEx(const game_import_ex_t *import)
+{
+    static const game_export_ex_t exports = {
+        .apiversion = GAME_API_VERSION_EX,
+        .structsize = sizeof(exports),
+    };
+    if (import && import->structsize >= offsetof(game_import_ex_t, TagRealloc) && import->GetExtension) {
+        unlag_game_ex = import;
+        unlag_api = import->GetExtension(UNLAG_API_V1);
+    }
+    return &exports;
+}
+#endif
 
 #ifndef GAME_HARD_LINKED
 // this is only here so the functions in q_shared.c and q_shwin.c can link
@@ -512,6 +536,7 @@ void G_RunFrame(void) {
     TDM_UpdateConfigStrings(false);
     TDM_CheckTimes();
     ClientEndServerFrames();    // build the playerstate_t for all players
+    G_UnlagRecord();
     level.realframenum++;
 
     if (tdm_match_status != MM_TIMEOUT) {

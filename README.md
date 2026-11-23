@@ -24,6 +24,8 @@ What the tick rate commits change:
 - The crush limiter logs the first overflow of its 64-pair table and reports the total at map change or shutdown.
 - Above 10 Hz, launcher grenades, hand grenades and dropped items follow the classic 10 Hz arc. After a bounce, the object stays at the impact point until the end of the 100 ms step.
 
+- Hitscan lag compensation is off by default (`g_unlag 0`). When enabled on a compatible server, it covers rail shots, bullets and shotgun pellets. Projectiles, BFG beams, doors and lifts use the current world.
+
 The same code also changes a few things at 10 Hz:
 
 - The trigger_hurt sound plays on the first contact, and for a trigger_hurt with the SLOW flag on every hit, instead of only on frames divisible by 10.
