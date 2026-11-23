@@ -492,6 +492,9 @@ qboolean G_CrushAllowed(edict_t *self, edict_t *other) {
         i = free;
     } else {
         // table full: at most one hit per 0.1 s on this victim
+        if (++level.crush_overflows == 1) {
+            gi.dprintf("Crush limiter: table full (%d pairs), limiting per victim\n", MAX_CRUSH);
+        }
         other->crush_framenum = level.framenum + SECS_TO_FRAMES(0.1f);
         return true;
     }
@@ -499,6 +502,14 @@ qboolean G_CrushAllowed(edict_t *self, edict_t *other) {
     level.crush[i].other = other;
     level.crush[i].framenum = level.framenum + SECS_TO_FRAMES(0.1f);
     return true;
+}
+
+void G_ReportCrushOverflow(void) {
+    if (!level.crush_overflows) {
+        return;
+    }
+    gi.dprintf("Crush limiter: overflow total on %s = %llu\n", level.mapname, level.crush_overflows);
+    level.crush_overflows = 0;
 }
 
 /**

@@ -186,6 +186,7 @@ char* TDM_MakeServerDemoName(void);
  */
 void ShutdownGame(void) {
     gi.dprintf("==== ShutdownGame ====\n");
+    G_ReportCrushOverflow();
     gi.cvar_forceset("g_features", "0");
     gi.FreeTags(TAG_LEVEL);
     gi.FreeTags(TAG_GAME);

@@ -545,6 +545,7 @@ typedef struct {
         edict_t     *self, *other;
         int         framenum;
     } crush[MAX_CRUSH];
+    unsigned long long crush_overflows;
 } level_locals_t;
 
 
@@ -910,6 +911,7 @@ void G_InitEdict(edict_t *e);
 edict_t *G_Spawn(void);
 void G_FreeEdict(edict_t *e);
 qboolean G_CrushAllowed(edict_t *self, edict_t *other);
+void G_ReportCrushOverflow(void);
 void G_StuffCmd(edict_t *e, const char *fmt, ...)
         __attribute__ ((format (printf, 2, 3)));
 void G_UnicastSound(edict_t *ent, int index, qboolean reliable);
