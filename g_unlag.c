@@ -6,6 +6,7 @@ enum { HISTORY_COUNT = 2 + 250 * UNLAG_MAX_FPS / 1000 };
 typedef struct {
     uint64_t life;
     uint64_t command_life;
+    int life_frame;
     int command_frame;
     unlag_pose_t poses[HISTORY_COUNT];
 } unlag_slot_t;
@@ -40,8 +41,11 @@ void G_UnlagShutdown(void)
 
 void G_UnlagNewLife(edict_t *ent)
 {
-    if (slots)
-        UnlagSlot(ent)->life++;
+    if (slots) {
+        unlag_slot_t *slot = UnlagSlot(ent);
+        slot->life++;
+        slot->life_frame = unlag_api->WorldFrame();
+    }
 }
 
 void G_UnlagClear(void)
@@ -103,7 +107,7 @@ unlag_shot_t G_UnlagBeginShot(edict_t *ent)
     if (!slot->command_life || slot->command_life != slot->life)
         return shot;
     int frame = unlag_api->WorldFrame();
-    if (slot->command_frame > frame)
+    if (slot->command_frame < slot->life_frame || slot->command_frame > frame)
         return shot;
 
     float ms = min(max(g_unlag_max_ms->value, 0.0f), 250.0f);

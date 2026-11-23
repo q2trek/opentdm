@@ -32,6 +32,8 @@ What the tick rate commits change:
 
 - Grenades and dropped items lose support immediately when a supporting wall switches off.
 
+- Lag compensation skips shot-time estimates from before the shooter spawned or teleported.
+
 The same code also changes a few things at 10 Hz:
 
 - The trigger_hurt sound plays on the first contact, and for a trigger_hurt with the SLOW flag on every hit, instead of only on frames divisible by 10.
