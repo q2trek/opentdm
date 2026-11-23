@@ -281,8 +281,9 @@ static trace_t SV_PushEntity(edict_t *ent, int remaining, int step_frames) {
 
     VectorCopy(ent->s.origin, start);
     // Reuse the endpoint unless something moved or accelerated the object between frames.
-    if (remaining < step_frames && VectorCompare(start, ent->toss_origin) &&
-        VectorCompare(ent->velocity, ent->toss_velocity)) {
+    qboolean reuse = remaining < step_frames && VectorCompare(start, ent->toss_origin) &&
+                     VectorCompare(ent->velocity, ent->toss_velocity);
+    if (reuse) {
         VectorCopy(ent->toss_end, end);
     } else {
         // Account for rounding in the world's frame duration at the classic boundary.
@@ -302,6 +303,23 @@ static trace_t SV_PushEntity(edict_t *ent, int remaining, int step_frames) {
     }
 
     trace = gi.trace(start, ent->mins, ent->maxs, end, ent, mask);
+    if (!reuse) {
+        ent->toss_world_steps = 0;
+        if (remaining > 1 && trace.ent == world && trace.fraction < 1.0f &&
+            !trace.startsolid && !trace.allsolid) {
+            ent->toss_world_trace = trace;
+            ent->toss_world_steps = remaining;
+        }
+    } else if (ent->toss_world_steps) {
+        // Rounded intermediate positions can change the face selected at an outside corner.
+        int steps = ent->toss_world_steps;
+        float impact = ent->toss_world_trace.fraction * steps - (steps - remaining);
+        float fraction = fmaxf(impact / remaining, 0.0f);
+        if (trace.ent == world || (!trace.startsolid && trace.fraction >= fraction)) {
+            trace = ent->toss_world_trace;
+            trace.fraction = fraction;
+        }
+    }
     // Look ahead to the classic step's endpoint, but take only hits within this world frame.
     if (remaining > 1 && trace.fraction * remaining > 1.0f) {
         VectorMA(end, -FRAMETIME * (remaining - 1), ent->velocity, trace.endpos);

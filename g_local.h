@@ -1769,6 +1769,8 @@ struct edict_s {
     vec3_t      toss_end;
     vec3_t      toss_origin;
     vec3_t      toss_velocity;
+    trace_t     toss_world_trace;
+    int         toss_world_steps;
     int         crush_framenum;     // G_CrushAllowed on a full table: next damage frame of this victim
     edict_t     *teamchain;
     edict_t     *teammaster;
