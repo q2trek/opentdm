@@ -357,7 +357,7 @@ void TossClientWeapon(edict_t *self) {
         quad = false;
     } else {
         quad = (self->client->quad_framenum
-                > (level.framenum + SECS_TO_FRAMES(1)));
+                > (G_WindowFrame(level.framenum) + SECS_TO_FRAMES(1)));
     }
 
     if (item && quad) {

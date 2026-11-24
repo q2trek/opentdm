@@ -1595,6 +1595,7 @@ struct gclient_s {
     float          fall_value;      // for view drop on fall
     int            fall_framenum;   // deadline on level.realframenum, including timeouts
     float          damage_alpha;
+    float          powerup_blend[4];
     float          bonus_alpha;
     vec3_t         damage_blend;
     vec3_t         v_angle;         // aiming direction

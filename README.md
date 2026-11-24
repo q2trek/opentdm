@@ -43,8 +43,11 @@ What the tick rate commits change:
 
 - Fall damage uses the preceding grid frame's velocity sample.
 
+- Item and powerup deadlines, HUD indicators and tint follow the grid.
+
 The same code also changes a few things at 10 Hz:
 
+- A dropped quad picked up at its expiry is consumed without adding quad time.
 - A linear mover interrupted by a timeout resumes to its normal endpoint.
 - A second short attack tap in the same window is discarded.
 - Moves that aren't whole multiples of 1/8 unit keep their exact average speed.

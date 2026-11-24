@@ -41,7 +41,7 @@ gitem_armor_t combatarmor_info = { 50, 100, .60f, .30f, ARMOR_COMBAT };
 gitem_armor_t bodyarmor_info = { 100, 200, .80f, .60f, ARMOR_BODY };
 
 void Use_Quad(edict_t *ent, const gitem_t *item);
-static int quad_drop_timeout_hack;
+static void Use_QuadFor(edict_t *ent, const gitem_t *item, int timeout);
 
 /*
  ===============
@@ -110,7 +110,7 @@ void SetRespawn(edict_t *ent, float delay) {
     ent->flags |= FL_RESPAWN;
     ent->svflags |= SVF_NOCLIENT;
     ent->solid = SOLID_NOT;
-    ent->nextthink = level.framenum + SECS_TO_FRAMES(delay);
+    ent->nextthink = G_WindowFrame(level.framenum) + G_GridFrames(delay);
     ent->think = DoRespawn;
     gi.linkentity(ent);
 }
@@ -126,13 +126,9 @@ qboolean Pickup_Powerup(edict_t *ent, edict_t *other) {
         SetRespawn(ent, ent->item->quantity);
     }
 
-    if (((int) dmflags->value & DF_INSTANT_ITEMS)
-            || ((ent->item->use == Use_Quad)
-                    && (ent->spawnflags & DROPPED_PLAYER_ITEM))) {
-        if ((ent->item->use == Use_Quad)
-                && (ent->spawnflags & DROPPED_PLAYER_ITEM)) {
-            quad_drop_timeout_hack = (ent->nextthink - level.framenum);
-        }
+    if (ent->item->use == Use_Quad && (ent->spawnflags & DROPPED_PLAYER_ITEM)) {
+        Use_QuadFor(other, ent->item, ent->nextthink - G_WindowFrame(level.framenum));
+    } else if ((int) dmflags->value & DF_INSTANT_ITEMS) {
         ent->item->use(other, ent->item);
     }
     return true;
@@ -292,22 +288,20 @@ qboolean Pickup_Pack(edict_t *ent, edict_t *other) {
 }
 
 void Use_Quad(edict_t *ent, const gitem_t *item) {
-    int timeout;
+    Use_QuadFor(ent, item, SECS_TO_FRAMES(30));
+}
 
+static void Use_QuadFor(edict_t *ent, const gitem_t *item, int timeout) {
     ent->client->inventory[ITEM_INDEX(item)]--;
     ValidateSelectedItem(ent);
 
-    if (quad_drop_timeout_hack) {
-        timeout = quad_drop_timeout_hack;
-        quad_drop_timeout_hack = 0;
-    } else {
-        timeout = SECS_TO_FRAMES(30);
-    }
+    if (timeout <= 0)
+        return;
 
     if (ent->client->quad_framenum > level.framenum) {
         ent->client->quad_framenum += timeout;
     } else {
-        ent->client->quad_framenum = level.framenum + timeout;
+        ent->client->quad_framenum = G_WindowFrame(level.framenum) + timeout;
         TDM_UpdateSpectatorsOnEvent(SPEC_QUAD, ent, NULL);
     }
 
@@ -322,7 +316,7 @@ void Use_Breather(edict_t *ent, const gitem_t *item) {
     if (ent->client->breather_framenum > level.framenum) {
         ent->client->breather_framenum += SECS_TO_FRAMES(30);
     } else {
-        ent->client->breather_framenum = level.framenum + SECS_TO_FRAMES(30);
+        ent->client->breather_framenum = G_WindowFrame(level.framenum) + SECS_TO_FRAMES(30);
     }
 }
 
@@ -333,7 +327,7 @@ void Use_Envirosuit(edict_t *ent, const gitem_t *item) {
     if (ent->client->enviro_framenum > level.framenum) {
         ent->client->enviro_framenum += SECS_TO_FRAMES(30);
     } else {
-        ent->client->enviro_framenum = level.framenum + SECS_TO_FRAMES(30);
+        ent->client->enviro_framenum = G_WindowFrame(level.framenum) + SECS_TO_FRAMES(30);
     }
 }
 
@@ -344,7 +338,7 @@ void Use_Invulnerability(edict_t *ent, const gitem_t *item) {
     if (ent->client->invincible_framenum > level.framenum) {
         ent->client->invincible_framenum += SECS_TO_FRAMES(30);
     } else {
-        ent->client->invincible_framenum = level.framenum + SECS_TO_FRAMES(30);
+        ent->client->invincible_framenum = G_WindowFrame(level.framenum) + SECS_TO_FRAMES(30);
         TDM_UpdateSpectatorsOnEvent(SPEC_INVUL, ent, NULL);
     }
 
@@ -507,7 +501,7 @@ qboolean Pickup_Health(edict_t *ent, edict_t *other) {
 
     if (ent->style & HEALTH_TIMED) {
         ent->think = MegaHealth_think;
-        ent->nextthink = level.framenum + SECS_TO_FRAMES(5);
+        ent->nextthink = G_WindowFrame(level.framenum) + SECS_TO_FRAMES(5);
         ent->owner = other;
         ent->flags |= FL_RESPAWN;
         ent->svflags |= SVF_NOCLIENT;
@@ -740,7 +734,7 @@ void Touch_Item(edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
                 ent->item->icon);
         other->client->ps.stats[STAT_PICKUP_STRING] = CS_ITEMS
                 + ITEM_INDEX(ent->item);
-        other->client->pickup_msg_framenum = level.framenum + SECS_TO_FRAMES(3);
+        other->client->pickup_msg_framenum = G_WindowFrame(level.framenum) + SECS_TO_FRAMES(3);
 
         // change selected item
 
@@ -847,7 +841,7 @@ edict_t* Drop_Item(edict_t *ent, const gitem_t *item) {
     dropped->velocity[2] = 300;
 
     dropped->think = drop_make_touchable;
-    dropped->nextthink = level.framenum + SECS_TO_FRAMES(1);
+    dropped->nextthink = G_WindowFrame(level.framenum) + SECS_TO_FRAMES(1);
 
     gi.linkentity(dropped);
 

@@ -397,12 +397,48 @@ void SV_AddBlend(float r, float g, float b, float a, float *v_blend) {
 /**
  *
  */
+static void CalcPowerupBlend(edict_t *ent, qboolean warn)
+{
+    gclient_t *client = ent->client;
+    float *blend = client->powerup_blend;
+    int remaining;
+    const char *sound;
+    float alpha = 0.08f;
+
+    if (client->quad_framenum > level.framenum) {
+        remaining = client->quad_framenum - level.framenum;
+        sound = "items/damage2.wav";
+        VectorSet(blend, 0, 0, 1);
+    } else if (client->invincible_framenum > level.framenum) {
+        remaining = client->invincible_framenum - level.framenum;
+        sound = "items/protect2.wav";
+        VectorSet(blend, 1, 1, 0);
+    } else if (client->enviro_framenum > level.framenum) {
+        remaining = client->enviro_framenum - level.framenum;
+        sound = "items/airout.wav";
+        VectorSet(blend, 0, 1, 0);
+    } else {
+        remaining = client->breather_framenum - level.framenum;
+        sound = "items/airout.wav";
+        VectorSet(blend, 0.4f, 1, 0.4f);
+        alpha = 0.04f;
+    }
+
+    if (warn && remaining == SECS_TO_FRAMES(3))
+        gi.sound(ent, CHAN_ITEM, gi.soundindex(sound), 1, ATTN_NORM, 0);
+    blend[3] = remaining > SECS_TO_FRAMES(3) || ((remaining / SECS_TO_FRAMES(0.1f)) & 4) ? alpha : 0;
+}
+
 void SV_CalcBlend(edict_t *ent) {
     int contents;
     vec3_t vieworg;
-    int remaining;
+    float *powerup_blend = ent->client->powerup_blend;
+    qboolean powerup_active = ent->client->quad_framenum > level.framenum ||
+                          ent->client->invincible_framenum > level.framenum ||
+                          ent->client->enviro_framenum > level.framenum ||
+                          ent->client->breather_framenum > level.framenum;
     // the game clock is frozen in a timeout: warn once, when it runs again
-    qboolean warn = tdm_match_status != MM_TIMEOUT;
+    qboolean warn = !GAME_FROZEN;
 
     ent->client->ps.blend[0] = ent->client->ps.blend[1] =
             ent->client->ps.blend[2] = ent->client->ps.blend[3] = 0;
@@ -424,48 +460,15 @@ void SV_CalcBlend(edict_t *ent) {
         SV_AddBlend(0.5f, 0.3f, 0.2f, 0.4f, ent->client->ps.blend);
     }
 
-    // add for powerups
-    if (ent->client->quad_framenum > level.framenum) {
-        remaining = ent->client->quad_framenum - level.framenum;
-        if (warn && remaining == SECS_TO_FRAMES(3)) {    // beginning to fade
-            gi.sound(ent, CHAN_ITEM, gi.soundindex("items/damage2.wav"), 1,
-                    ATTN_NORM, 0);
-        }
-        if (remaining > SECS_TO_FRAMES(3)
-                || ((remaining / SECS_TO_FRAMES(0.1f)) & 4)) {
-            SV_AddBlend(0, 0, 1, 0.08f, ent->client->ps.blend);
-        }
-    } else if (ent->client->invincible_framenum > level.framenum) {
-        remaining = ent->client->invincible_framenum - level.framenum;
-        if (warn && remaining == SECS_TO_FRAMES(3)) {   // beginning to fade
-            gi.sound(ent, CHAN_ITEM, gi.soundindex("items/protect2.wav"), 1,
-                    ATTN_NORM, 0);
-        }
-        if (remaining > SECS_TO_FRAMES(3)
-                || ((remaining / SECS_TO_FRAMES(0.1f)) & 4)) {
-            SV_AddBlend(1, 1, 0, 0.08f, ent->client->ps.blend);
-        }
-    } else if (ent->client->enviro_framenum > level.framenum) {
-        remaining = ent->client->enviro_framenum - level.framenum;
-        if (warn && remaining == SECS_TO_FRAMES(3)) {   // beginning to fade
-            gi.sound(ent, CHAN_ITEM, gi.soundindex("items/airout.wav"), 1,
-                    ATTN_NORM, 0);
-        }
-        if (remaining > SECS_TO_FRAMES(3)
-                || ((remaining / SECS_TO_FRAMES(0.1f)) & 4)) {
-            SV_AddBlend(0, 1, 0, 0.08f, ent->client->ps.blend);
-        }
-    } else if (ent->client->breather_framenum > level.framenum) {
-        remaining = ent->client->breather_framenum - level.framenum;
-        if (warn && remaining == SECS_TO_FRAMES(3)) {   // beginning to fade
-            gi.sound(ent, CHAN_ITEM, gi.soundindex("items/airout.wav"), 1,
-                    ATTN_NORM, 0);
-        }
-        if (remaining > SECS_TO_FRAMES(3)
-                || ((remaining / SECS_TO_FRAMES(0.1f)) & 4)) {
-            SV_AddBlend(0.4f, 1, 0.4f, 0.04f, ent->client->ps.blend);
-        }
-    }
+    // Reuse the grid tint while still composing water, damage and bonus every frame.
+    if (ent->health <= 0 || !powerup_active)
+        powerup_blend[3] = 0;
+    else if (FRAMESYNC)
+        CalcPowerupBlend(ent, warn);
+
+    if (powerup_blend[3] > 0)
+        SV_AddBlend(powerup_blend[0], powerup_blend[1], powerup_blend[2],
+                  powerup_blend[3], ent->client->ps.blend);
 
     // add for damage
     if (ent->client->damage_alpha > 0) {
@@ -760,12 +763,17 @@ void P_WorldEffects(void) {
 void G_SetClientEffects(edict_t *ent) {
     int pa_type;
     int remaining;
-    ent->s.effects = 0;
-    ent->s.renderfx = 0;
-
     if (ent->health <= 0 || tdm_match_status == MM_SCOREBOARD) {
+        ent->s.effects = 0;
+        ent->s.renderfx = 0;
         return;
     }
+
+    if (!FRAMESYNC)
+        return;
+
+    ent->s.effects = 0;
+    ent->s.renderfx = 0;
 
     if (ent->powerarmor_framenum > level.framenum) {
         pa_type = PowerArmorType(ent);
