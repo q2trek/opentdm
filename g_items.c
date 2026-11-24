@@ -106,12 +106,18 @@ void DoRespawn(edict_t *ent) {
     ent->s.event = EV_ITEM_RESPAWN;
 }
 
+static void DoScheduledRespawn(edict_t *ent)
+{
+    if (!G_DeferToWindow(ent))
+        DoRespawn(ent);
+}
+
 void SetRespawn(edict_t *ent, float delay) {
     ent->flags |= FL_RESPAWN;
     ent->svflags |= SVF_NOCLIENT;
     ent->solid = SOLID_NOT;
     ent->nextthink = G_WindowFrame(level.framenum) + G_GridFrames(delay);
-    ent->think = DoRespawn;
+    ent->think = DoScheduledRespawn;
     gi.linkentity(ent);
 }
 

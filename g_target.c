@@ -143,6 +143,9 @@ void SP_target_goal(edict_t *ent) {
  * "dmg"      how much radius damage should be done, defaults to 0
  */
 void target_explosion_explode(edict_t *self) {
+    if (self->delay && G_DeferToWindow(self))
+        return;
+
     float save;
 
     gi.WriteByte(SVC_TEMP_ENTITY);

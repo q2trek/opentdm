@@ -38,6 +38,9 @@ void InitTrigger(edict_t *self) {
  * the wait time has passed, so set back up for another activation
  */
 void multi_wait(edict_t *ent) {
+    if (G_DeferToWindow(ent))
+        return;
+
     ent->nextthink = 0;
 }
 

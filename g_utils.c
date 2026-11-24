@@ -30,6 +30,14 @@ int G_WindowFrame(int framenum)
     return ((framenum + div - 1) / div) * div;
 }
 
+qboolean G_DeferToWindow(edict_t *ent)
+{
+    if (FRAMESYNC)
+        return false;
+    ent->nextthink = G_WindowFrame(level.framenum);
+    return true;
+}
+
 int G_GridFrames(float seconds)
 {
     return SECS_TO_FRAMES(0.1f) * (int)(seconds * 10);
@@ -149,6 +157,9 @@ edict_t* G_PickTarget(char *targetname) {
  *
  */
 void Think_Delay(edict_t *ent) {
+    if (G_DeferToWindow(ent))
+        return;
+
     G_UseTargets(ent, ent->activator);
     G_FreeEdict(ent);
 }

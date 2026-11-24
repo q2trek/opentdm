@@ -932,6 +932,7 @@ void SetPowerupRespawnDelay(void);
 // g_utils.c
 int G_WindowFrame(int framenum);
 int G_GridFrames(float seconds);
+qboolean G_DeferToWindow(edict_t *ent);
 qboolean KillBox(edict_t *ent);
 void G_ProjectSource(vec3_t point, vec3_t distance, vec3_t forward,
         vec3_t right, vec3_t result);
