@@ -37,8 +37,11 @@ What the tick rate commits change:
 
 - Weapon bolts, rockets, grenades and BFG balls move, touch and think in complete 100 ms steps. Dropped items and debris keep the classic toss arc and wait out the current step after a bounce. Moving supports carry loose objects. Weapon grenades recheck moving support on their grid step.
 
+- Weapons step at most once per 100 ms window. Only the first weapon step in a window can consume a released tap.
+
 The same code also changes a few things at 10 Hz:
 
+- A second short attack tap in the same window is discarded.
 - Moves that aren't whole multiples of 1/8 unit keep their exact average speed.
 - A player on a mover keeps it as ground in frames without a usercmd.
 - When more than 64 crush pairs (source and victim) are active within 0.1 s, a second source crushing the same victim in that time loses its hit.

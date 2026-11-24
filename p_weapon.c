@@ -238,21 +238,21 @@ void NoAmmoWeaponChange(edict_t *ent) {
 /**
  * Called by ClientBeginServerFrame and ClientThink
  */
-void Weapon_Grenade(edict_t *ent);
-
 void Think_Weapon(edict_t *ent) {
-    int buttons, latched;
-    qboolean pending;
+    int framenum = level.framenum;
+
+    // An early step from ClientThink uses the coming grid frame's clock.
+    level.framenum = G_WindowFrame(framenum);
 
     // if just died, put the weapon away
     if (ent->health < 1) {
-        ent->client->attack_pending = false;
         ent->client->newweapon = NULL;
         ChangeWeapon(ent);
     }
 
     // don't run weapons at all during timeout, preserve reload frame etc
     if (tdm_match_status == MM_TIMEOUT) {
+        level.framenum = framenum;
         return;
     }
 
@@ -260,7 +260,6 @@ void Think_Weapon(edict_t *ent) {
     if (tdm_match_status == MM_COUNTDOWN) {
         ent->client->buttons &= ~BUTTON_ATTACK;
         ent->client->latched_buttons &= ~BUTTON_ATTACK;
-        ent->client->attack_pending = false;
     }
 
     // draw attention to the ready status...
@@ -268,7 +267,6 @@ void Think_Weapon(edict_t *ent) {
             && teaminfo[ent->client->pers.team].safety) {
         ent->client->buttons &= ~BUTTON_ATTACK;
         ent->client->latched_buttons &= ~BUTTON_ATTACK;
-        ent->client->attack_pending = false;
     }
 
     // draw attention to the current vote by not letting weapon fire
@@ -277,21 +275,7 @@ void Think_Weapon(edict_t *ent) {
             && ent->client->resp.vote == VOTE_HOLD) {
         ent->client->buttons &= ~BUTTON_ATTACK;
         ent->client->latched_buttons &= ~BUTTON_ATTACK;
-        ent->client->attack_pending = false;
     }
-
-    // variable FPS support
-    if (ent->client->next_weapon_think > level.framenum) {
-        return;
-    }
-
-    ent->client->next_weapon_think = level.framenum + (SECS_TO_FRAMES(0.1f));
-
-    // a press between two weapon steps is seen by this step only, as if
-    // still held (Machinegun/HyperBlaster read the live buttons); the
-    // real buttons come back right after
-    pending = ent->client->attack_pending;
-    ent->client->attack_pending = false;
 
     // call active weapon think routine
     if (ent->client->weapon && ent->client->weapon->weaponthink) {
@@ -306,19 +290,9 @@ void Think_Weapon(edict_t *ent) {
         } else {
             is_silenced = 0;
         }
-        buttons = ent->client->buttons;
-        latched = ent->client->latched_buttons;
-        if (pending) {
-            // Grenade cooking follows the real hold/release, not a pending tap.
-            if (ent->client->weapon->weaponthink != Weapon_Grenade) {
-                ent->client->buttons |= BUTTON_ATTACK;
-            }
-            ent->client->latched_buttons |= BUTTON_ATTACK;
-        }
         ent->client->weapon->weaponthink(ent);
-        ent->client->buttons = buttons;
-        ent->client->latched_buttons &= latched | ~BUTTON_ATTACK;
     }
+    level.framenum = framenum;
 }
 
 /**

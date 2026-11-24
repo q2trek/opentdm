@@ -1566,7 +1566,6 @@ struct gclient_s {
     int            latched_buttons;
 
     qboolean       weapon_thunk;
-    qboolean       attack_pending;  // press not yet seen by a 100 ms weapon step
 
     const gitem_t  *newweapon;
 
@@ -1650,7 +1649,6 @@ struct gclient_s {
 
     int32          last_model_frame;
     int            next_animation_frame;
-    unsigned       next_weapon_think;
     vec3_t         saved_angles;
 
     int            last_hud_update;
