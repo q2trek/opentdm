@@ -16,13 +16,10 @@ What the tick rate commits change:
 - Movers carry their 1/8 unit rounding remainder into the next move, so they keep the right speed and stay on their path.
 - Accelerated doors and plats finish their last step over 100 ms instead of in one world frame.
 - A player standing on a mover keeps it as ground in frames without a usercmd (a movement packet from the client), so a descending lift no longer drops them.
-- An attack tap between two 100 ms weapon steps fires on the next step instead of being lost.
 - Fire released during a timeout stays released when the match resumes.
 - The `players` connect time, the intermission screenshot delay, the HUD clocks, the trigger_hurt damage and sound, the first BFG laser, the BFG explosion, the point the BFG explosion hurts from and the roll of a falling viper bomb are timed in seconds, not frames.
-- Grenades and dropped items check moving platform support every 100 ms, avoiding repeated impacts at higher rates. Support from a player is checked every world frame.
 - Camera kicks from falling, damage and firing the BFG decay during a timeout.
 - The crush limiter logs the first overflow of its 64-pair table and reports the total at map change or shutdown.
-- Above 10 Hz, launcher grenades, hand grenades and dropped items follow the classic 10 Hz arc. After a bounce, the object stays at the impact point until the end of the 100 ms step.
 
 - Hitscan lag compensation is off by default (`g_unlag 0`). When enabled on a compatible server, it covers rail shots, bullets and shotgun pellets. Projectiles, BFG beams, doors and lifts use the current world.
 
@@ -36,14 +33,14 @@ What the tick rate commits change:
 
 - Tossed objects preserve the classic impact face at an outer world corner at higher server rates.
 
+- The 100 ms grid follows server frames across level resets or failed map changes.
+
 The same code also changes a few things at 10 Hz:
 
-- The trigger_hurt sound plays on the first contact, and for a trigger_hurt with the SLOW flag on every hit, instead of only on frames divisible by 10.
 - Moves that aren't whole multiples of 1/8 unit keep their exact average speed.
 - A player on a mover keeps it as ground in frames without a usercmd.
 - When more than 64 crush pairs (source and victim) are active within 0.1 s, a second source crushing the same victim in that time loses its hit.
 - Fire released during a timeout no longer shoots once more when the match resumes and no usercmd arrives before the next weapon step (lag, packet loss).
-- A second attack tap in one packet, after the first already fired, fires on the next weapon step instead of being lost.
 
 Bug fixes on `master` (each also on its own `fix-*` branch):
 

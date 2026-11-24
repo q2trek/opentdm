@@ -486,6 +486,11 @@ void G_RunFrame(void) {
                 TDM_ResetGameState();
             } else {
                 ExitLevel();
+                // The engine counts this frame even if the map change fails.
+                if (SECS_TO_FRAMES(0.1f) > 1) {
+                    level.realframenum++;
+                    level.framenum++;
+                }
                 return;
             }
         }

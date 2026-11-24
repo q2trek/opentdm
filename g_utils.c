@@ -20,6 +20,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "g_local.h"
 
+// Between world frames, framenum already names the coming frame.
+int G_WindowFrame(int framenum)
+{
+    int div = SECS_TO_FRAMES(0.1f);
+
+    if (div <= 1 || framenum <= 0)
+        return framenum;
+    return ((framenum + div - 1) / div) * div;
+}
+
+int G_GridFrames(float seconds)
+{
+    return SECS_TO_FRAMES(0.1f) * (int)(seconds * 10);
+}
+
 #define MAXCHOICES  8
 
 /**
