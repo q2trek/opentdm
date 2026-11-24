@@ -412,7 +412,10 @@ qboolean SV_Push(edict_t *pusher, vec3_t move, vec3_t amove) {
     // move the pusher to it's final position
     VectorAdd(pusher->s.origin, move, pusher->s.origin);
     VectorAdd(pusher->s.angles, amove, pusher->s.angles);
-    gi.linkentity(pusher);
+    // A new linkcount makes riders recheck their support.
+    if (SECS_TO_FRAMES(0.1f) <= 1 || !VectorCompare(move, vec3_origin) || !VectorCompare(amove, vec3_origin)) {
+        gi.linkentity(pusher);
+    }
 
     // see if any solid entities are inside the final position
     check = g_edicts + 1;
