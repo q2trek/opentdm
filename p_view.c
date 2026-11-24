@@ -1032,8 +1032,10 @@ void ClientEndServerFrame(edict_t *ent) {
     bobcycle = (int) bobtime;
     bobfracsin = fabs(sin(bobtime * M_PI));
 
-    // detect hitting the floor
-    P_FallingDamage(ent);
+    // Compare landing speed with the preceding 100 ms sample.
+    if (FRAMESYNC) {
+        P_FallingDamage(ent);
+    }
 
     // apply all the damage taken this frame
     P_DamageFeedback(ent);
@@ -1087,8 +1089,8 @@ void ClientEndServerFrame(edict_t *ent) {
         ent->client->last_model_frame = ent->s.frame;
     }
 
-    VectorCopy(ent->velocity, ent->client->oldvelocity);
     if (FRAMESYNC) {
+        VectorCopy(ent->velocity, ent->client->oldvelocity);
         VectorCopy(ent->client->ps.viewangles, ent->client->oldviewangles);
     }
 

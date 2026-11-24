@@ -41,6 +41,8 @@ What the tick rate commits change:
 
 - Countdowns, respawns, voted time limits and timeout transitions follow the server grid. Timeouts preserve linear mover endpoints.
 
+- Fall damage uses the preceding grid frame's velocity sample.
+
 The same code also changes a few things at 10 Hz:
 
 - A linear mover interrupted by a timeout resumes to its normal endpoint.
