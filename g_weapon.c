@@ -482,8 +482,8 @@ void fire_grenade(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
 /**
  *
  */
-void fire_grenade2(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
-        int speed, int timer, float damage_radius, qboolean held) {
+void fire_grenade2_frames(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
+        int speed, int frames, float damage_radius, qboolean held, qboolean immediate) {
     edict_t *grenade;
     vec3_t dir;
     vec3_t forward, right, up;
@@ -510,7 +510,7 @@ void fire_grenade2(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
     grenade->s.modelindex = gi.modelindex("models/objects/grenade2/tris.md2");
     grenade->owner = self;
     grenade->touch = Grenade_Touch;
-    grenade->nextthink = G_WindowFrame(level.framenum) + timer;
+    grenade->nextthink = G_WindowFrame(level.framenum) + frames;
     grenade->think = Grenade_Explode;
     grenade->dmg = damage;
     grenade->dmg_radius = damage_radius;
@@ -522,7 +522,7 @@ void fire_grenade2(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
     }
     grenade->s.sound = gi.soundindex("weapons/hgrenc1b.wav");
 
-    if (timer <= 0) {
+    if (immediate) {
         Grenade_Explode(grenade);
     } else {
         gi.sound(self, CHAN_WEAPON, gi.soundindex("weapons/hgrent1a.wav"), 1,
@@ -531,6 +531,12 @@ void fire_grenade2(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
         gi.linkentity(grenade);
         CheckSolidExplode(grenade);
     }
+}
+
+void fire_grenade2(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
+        int speed, float timer, float damage_radius, qboolean held) {
+    fire_grenade2_frames(self, start, aimdir, damage, speed, G_GridFrames(timer),
+                         damage_radius, held, timer <= 0.0f);
 }
 
 /**

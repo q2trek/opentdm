@@ -1007,7 +1007,9 @@ void fire_blaster(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
 void fire_grenade(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
         int speed, float timer, float damage_radius);
 void fire_grenade2(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
-        int speed, int timer, float damage_radius, qboolean held);
+        int speed, float timer, float damage_radius, qboolean held);
+void fire_grenade2_frames(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
+        int speed, int frames, float damage_radius, qboolean held, qboolean immediate);
 void fire_rocket(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed,
         float damage_radius, int radius_damage);
 void fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage,

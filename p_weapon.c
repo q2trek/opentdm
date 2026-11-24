@@ -547,13 +547,14 @@ void weapon_grenade_fire(edict_t *ent, qboolean held) {
     AngleVectors(ent->client->v_angle, forward, right, NULL);
     P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
 
+    int remaining = ent->client->grenade_framenum - level.framenum;
     int div = SECS_TO_FRAMES(0.1f);
-    int windows = (ent->client->grenade_framenum - level.framenum) / div;
+    int windows = remaining / div;
     float timer = windows * 0.1f;
     speed = GRENADE_MINSPEED
             + (GRENADE_TIMER - timer)
                     * ((GRENADE_MAXSPEED - GRENADE_MINSPEED) / GRENADE_TIMER);
-    fire_grenade2(ent, start, forward, damage, speed, windows * div, radius, held);
+    fire_grenade2_frames(ent, start, forward, damage, speed, windows * div, radius, held, remaining <= 0);
     TDM_WeaponFired(ent);
 
     if (!((int) dmflags->value & DF_INFINITE_AMMO)) {
