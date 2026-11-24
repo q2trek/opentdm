@@ -41,6 +41,8 @@ What the tick rate commits change:
 
 - Weapons step at most once per 100 ms window. Only the first weapon step in a window can consume a released tap.
 
+- Hand grenades use the classic fuse and launch speed at every server rate.
+
 - Countdowns, respawns, voted time limits and timeout transitions follow the server grid. Timeouts preserve linear mover endpoints.
 
 - Fall damage uses the preceding grid frame's velocity sample.
