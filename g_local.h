@@ -1044,7 +1044,11 @@ void M_MoveToGoal(edict_t *ent, float dist);
 void M_ChangeYaw(edict_t *ent);
 
 // g_phys.c
+void G_GridProjectile(edict_t *ent);
 void G_RunEntity(edict_t *ent);
+void SV_TossAirborne(edict_t *ent);
+void G_FreezeFrame(void);
+void G_ResumeMoverThinks(void);
 
 // g_chase.c
 void UpdateLockCam(edict_t *ent);
@@ -1766,8 +1770,14 @@ struct edict_s {
     edict_t     *activator;
     edict_t     *groundentity;
     int         groundentity_linkcount;
+    qboolean    grid_move;
+    int         grid_frame;         // world frame of the last grid step
+    vec3_t      grid_from;
+    vec3_t      grid_from_angles;
+    int         toss_ground_frame;  // stationary toss turn, stored as framenum + 1
     int         toss_phase;         // world frames already advanced in the classic toss step
     qboolean    toss_hold;          // wait in place after a bounce until the classic step ends
+    int         toss_resume_hold;   // world frames left in the skipped timeout step
     vec3_t      toss_end;
     vec3_t      toss_origin;
     vec3_t      toss_velocity;

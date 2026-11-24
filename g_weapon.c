@@ -327,13 +327,14 @@ void fire_blaster(edict_t *self, vec3_t start, vec3_t dir, int damage,
     bolt->s.sound = gi.soundindex("misc/lasfly.wav");
     bolt->owner = self;
     bolt->touch = blaster_touch;
-    bolt->nextthink = level.framenum + SECS_TO_FRAMES(2);
+    bolt->nextthink = G_WindowFrame(level.framenum) + SECS_TO_FRAMES(2);
     bolt->think = G_FreeEdict;
     bolt->dmg = damage;
     bolt->classname = "bolt";
     if (hyper) {
         bolt->spawnflags = 1;
     }
+    G_GridProjectile(bolt);
     gi.linkentity(bolt);
     tr = gi.trace(self->s.origin, NULL, NULL, bolt->s.origin, bolt, MASK_SHOT);
     if (tr.fraction < 1.0f && tr.ent != self) {
@@ -467,12 +468,13 @@ void fire_grenade(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
     grenade->s.modelindex = gi.modelindex("models/objects/grenade/tris.md2");
     grenade->owner = self;
     grenade->touch = Grenade_Touch;
-    grenade->nextthink = level.framenum + SECS_TO_FRAMES(timer);
+    grenade->nextthink = G_WindowFrame(level.framenum) + G_GridFrames(timer);
     grenade->think = Grenade_Explode;
     grenade->dmg = damage;
     grenade->dmg_radius = damage_radius;
     grenade->classname = "grenade";
     grenade->enttype = ENT_GRENADE;
+    G_GridProjectile(grenade);
     gi.linkentity(grenade);
     CheckSolidExplode(grenade);
 }
@@ -508,7 +510,7 @@ void fire_grenade2(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
     grenade->s.modelindex = gi.modelindex("models/objects/grenade2/tris.md2");
     grenade->owner = self;
     grenade->touch = Grenade_Touch;
-    grenade->nextthink = level.framenum + SECS_TO_FRAMES(timer);
+    grenade->nextthink = G_WindowFrame(level.framenum) + G_GridFrames(timer);
     grenade->think = Grenade_Explode;
     grenade->dmg = damage;
     grenade->dmg_radius = damage_radius;
@@ -525,6 +527,7 @@ void fire_grenade2(edict_t *self, vec3_t start, vec3_t aimdir, int damage,
     } else {
         gi.sound(self, CHAN_WEAPON, gi.soundindex("weapons/hgrent1a.wav"), 1,
                 ATTN_NORM, 0);
+        G_GridProjectile(grenade);
         gi.linkentity(grenade);
         CheckSolidExplode(grenade);
     }
@@ -595,13 +598,14 @@ void fire_rocket(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed,
     rocket->s.modelindex = gi.modelindex("models/objects/rocket/tris.md2");
     rocket->owner = self;
     rocket->touch = rocket_touch;
-    rocket->nextthink = level.framenum + 8000 * SERVER_FPS / speed;
+    rocket->nextthink = G_WindowFrame(level.framenum) + G_GridFrames(8000.0f / speed);
     rocket->think = G_FreeEdict;
     rocket->dmg = damage;
     rocket->radius_dmg = radius_damage;
     rocket->dmg_radius = damage_radius;
     rocket->s.sound = gi.soundindex("weapons/rockfly.wav");
     rocket->classname = "rocket";
+    G_GridProjectile(rocket);
     gi.linkentity(rocket);
     CheckSolidExplode(rocket);
 }
@@ -878,10 +882,11 @@ void fire_bfg(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed,
     bfg->s.sound = gi.soundindex("weapons/bfg__l1a.wav");
 
     bfg->think = bfg_think;
-    bfg->nextthink = level.framenum + SECS_TO_FRAMES(0.1f);
+    bfg->nextthink = G_WindowFrame(level.framenum) + G_GridFrames(0.1f);
     bfg->teammaster = bfg;
     bfg->teamchain = NULL;
 
+    G_GridProjectile(bfg);
     gi.linkentity(bfg);
 
     CheckSolidExplode(bfg);

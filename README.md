@@ -35,6 +35,8 @@ What the tick rate commits change:
 
 - The 100 ms grid follows server frames across level resets or failed map changes.
 
+- Weapon bolts, rockets, grenades and BFG balls move, touch and think in complete 100 ms steps. Dropped items and debris keep the classic toss arc and wait out the current step after a bounce. Moving supports carry loose objects. Weapon grenades recheck moving support on their grid step.
+
 The same code also changes a few things at 10 Hz:
 
 - Moves that aren't whole multiples of 1/8 unit keep their exact average speed.

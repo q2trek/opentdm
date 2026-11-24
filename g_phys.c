@@ -288,7 +288,7 @@ static trace_t SV_PushEntity(edict_t *ent, int remaining, int step_frames) {
     } else {
         // Account for rounding in the world's frame duration at the classic boundary.
         float correction = step_frames > 1 ? TOSS_STEP_TIME - FRAMETIME * step_frames : 0;
-        VectorScale(ent->velocity, correction + FRAMETIME * remaining, move);
+        VectorScale(ent->velocity, ent->grid_move ? TOSS_STEP_TIME : correction + FRAMETIME * remaining, move);
         VectorAdd(start, move, end);
         if (remaining > 1) {
             VectorCopy(end, ent->toss_end);
@@ -356,6 +356,7 @@ typedef struct {
     vec3_t angles;
     vec3_t carry;
     float deltayaw;
+    qboolean skip_touch;
 } pushed_t;
 pushed_t pushed[MAX_EDICTS], *pushed_p;
 edict_t *obstacle;
@@ -397,6 +398,7 @@ qboolean SV_Push(edict_t *pusher, vec3_t move, vec3_t amove) {
 
     // save the pusher's original position
     pushed_p->ent = pusher;
+    pushed_p->skip_touch = false;
     VectorCopy(pusher->s.origin, pushed_p->origin);
     VectorCopy(pusher->s.angles, pushed_p->angles);
     VectorCopy(carry, pushed_p->carry);
@@ -422,9 +424,12 @@ qboolean SV_Push(edict_t *pusher, vec3_t move, vec3_t amove) {
             continue;
         }
 
-        if (!check->area.prev) {
-            continue;   // not linked in anywhere
-        }
+        // Non-solid debris has no area link but can still rest on a mover.
+        qboolean debris_rider = SECS_TO_FRAMES(0.1f) > 1 && !check->area.prev &&
+            check->solid == SOLID_NOT && check->groundentity == pusher &&
+            (check->movetype == MOVETYPE_TOSS || check->movetype == MOVETYPE_BOUNCE);
+        if (!check->area.prev && !debris_rider)
+            continue;
 
         // if the entity is standing on the pusher, it will definitely be moved
         if (check->groundentity != pusher) {
@@ -447,6 +452,7 @@ qboolean SV_Push(edict_t *pusher, vec3_t move, vec3_t amove) {
                 || (check->groundentity == pusher)) {
             // move this entity
             pushed_p->ent = check;
+            pushed_p->skip_touch = debris_rider;
             VectorCopy(check->s.origin, pushed_p->origin);
             VectorCopy(check->s.angles, pushed_p->angles);
             VectorCopy(check->push_carry, pushed_p->carry);
@@ -481,6 +487,12 @@ qboolean SV_Push(edict_t *pusher, vec3_t move, vec3_t amove) {
                 continue;
             }
 
+            if (debris_rider) {
+                VectorCopy(pushed_p[-1].origin, check->s.origin);
+                pushed_p--;
+                continue;
+            }
+
             // if it is ok to leave in the old position, do it
             // this is only relevent for riding entities, not pushed
             // FIXME: this doesn't account for rotation
@@ -512,7 +524,8 @@ qboolean SV_Push(edict_t *pusher, vec3_t move, vec3_t amove) {
 
     // see if anything we moved has touched a trigger
     for (p = pushed_p - 1; p >= pushed; p--) {
-        G_TouchTriggers(p->ent);
+        if (!p->skip_touch)
+            G_TouchTriggers(p->ent);
     }
 
     return true;
@@ -595,13 +608,7 @@ void SV_Physics_Noclip(edict_t *ent) {
  * Toss, bounce, and fly movement.  When onground, do nothing.
  */
 void SV_Physics_Toss(edict_t *ent) {
-    trace_t trace;
-    float backoff;
-    edict_t *slave;
-    qboolean wasinwater;
-    qboolean isinwater;
-    vec3_t old_origin;
-
+    ent->toss_ground_frame = 0;
     SV_RunThink(ent);
     if (!ent->inuse) {
         return;
@@ -624,17 +631,37 @@ void SV_Physics_Toss(edict_t *ent) {
 
     // if onground, return without moving
     if (ent->groundentity) {
+        ent->toss_ground_frame = level.framenum + 1;
+        ent->toss_resume_hold = 0;
+        return;
+    }
+
+    SV_TossAirborne(ent);
+}
+
+void SV_TossAirborne(edict_t *ent)
+{
+    trace_t trace;
+    float backoff;
+    edict_t *slave;
+    qboolean wasinwater;
+    qboolean isinwater;
+    vec3_t old_origin;
+
+    if (ent->toss_resume_hold > 0) {
+        ent->toss_resume_hold--;
         return;
     }
     VectorCopy(ent->s.origin, old_origin);
 
     // Move angles even while waiting after a bounce.
-    VectorMA(ent->s.angles, FRAMETIME, ent->avelocity, ent->s.angles);
+    float step_time = ent->grid_move ? TOSS_STEP_TIME : FRAMETIME;
+    VectorMA(ent->s.angles, step_time, ent->avelocity, ent->s.angles);
 
     qboolean toss = ent->movetype == MOVETYPE_TOSS || ent->movetype == MOVETYPE_BOUNCE;
-    int step_frames = toss ? (int)(TOSS_STEP_TIME * SERVER_FPS) : 1;
+    int step_frames = toss && !ent->grid_move ? (int)(TOSS_STEP_TIME * SERVER_FPS) : 1;
     int remaining = step_frames;
-    if (toss) {
+    if (toss && !ent->grid_move) {
         remaining -= ent->toss_phase;
         ent->toss_phase = remaining == 1 ? 0 : ent->toss_phase + 1;
         if (ent->toss_hold) {
@@ -754,7 +781,25 @@ void SV_AddRotationalFriction(edict_t *ent) {
 /**
  *
  */
+void G_GridProjectile(edict_t *ent) {
+    ent->grid_move = true;
+    ent->grid_frame = -1;
+    VectorCopy(ent->s.origin, ent->grid_from);
+    VectorCopy(ent->s.angles, ent->grid_from_angles);
+    if (SECS_TO_FRAMES(0.1f) > 1)
+        ent->svflags |= SVF_NOCLIENT;
+}
+
 void G_RunEntity(edict_t *ent) {
+    if (ent->grid_move) {
+        if (!FRAMESYNC)
+            return;
+        if (ent->grid_frame < 0)
+            ent->svflags &= ~SVF_NOCLIENT;
+        ent->grid_frame = level.realframenum;
+        VectorCopy(ent->s.origin, ent->grid_from);
+        VectorCopy(ent->s.angles, ent->grid_from_angles);
+    }
     if (ent->prethink) {
         ent->prethink(ent);
     }

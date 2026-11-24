@@ -451,6 +451,52 @@ void ExitLevel(void) {
     ClientEndServerFrames();
 }
 
+static void G_CheckGround(edict_t *ent)
+{
+    edict_t *ground = ent->groundentity;
+    if (ground && ground->linkcount != ent->groundentity_linkcount) {
+        qboolean mover = ground->movetype == MOVETYPE_PUSH || ground->movetype == MOVETYPE_STOP;
+        qboolean toss = ent->movetype == MOVETYPE_TOSS || ent->movetype == MOVETYPE_BOUNCE;
+        if (!ground->inuse || ground->solid == SOLID_NOT) {
+            ent->groundentity = NULL;
+        } else if (ent->client || (SECS_TO_FRAMES(0.1f) > 1 && toss && mover && !ent->grid_move)) {
+            vec3_t end;
+            int mask = ent->clipmask ? ent->clipmask : MASK_SOLID;
+            if (ent->client)
+                mask = ent->health > 0 ? MASK_PLAYERSOLID : MASK_DEADSOLID;
+            VectorCopy(ent->s.origin, end);
+            end[2] -= 0.25f;
+            trace_t trace = gi.trace(ent->s.origin, ent->mins, ent->maxs, end, ent, mask);
+            if (!trace.startsolid && !trace.allsolid && trace.ent == ground &&
+                trace.plane.normal[2] >= 0.7f)
+                ent->groundentity_linkcount = ground->linkcount;
+            else
+                ent->groundentity = NULL;
+        } else if (!ent->grid_move || !mover || FRAMESYNC) {
+            ent->groundentity = NULL;
+        }
+    }
+}
+
+// A higher edict can remove or move support after a rider's turn.
+static void G_CheckLateGround(void)
+{
+    for (int i = game.maxclients + 1; i < globals.num_edicts; i++) {
+        edict_t *ent = g_edicts + i;
+        edict_t *ground = ent->groundentity;
+        if (!ent->inuse || !ground)
+            continue;
+        if (ent->grid_move && ground->inuse && ground->solid != SOLID_NOT)
+            continue;
+        G_CheckGround(ent);
+        if (!ent->groundentity && ent->toss_ground_frame == level.framenum + 1 &&
+            !ent->grid_move && (ent->movetype == MOVETYPE_TOSS || ent->movetype == MOVETYPE_BOUNCE)) {
+            level.current_entity = ent;
+            SV_TossAirborne(ent);
+        }
+    }
+}
+
 /**
  * Advance the world by 0.1 seconds
  */
@@ -504,38 +550,15 @@ void G_RunFrame(void) {
             level.current_entity = ent;
             VectorCopy(ent->old_origin, ent->s.old_origin);
 
-            // if the ground entity moved, make sure we are still on it
-            if ((ent->groundentity)
-                    && (ent->groundentity->linkcount
-                            != ent->groundentity_linkcount)) {
-                if (ent->client) {
-                    vec3_t end;
-                    trace_t trace;
-
-                    // A pusher can carry a client without a new usercmd. Recheck
-                    // actual support, also after a team push was rolled back.
-                    VectorCopy(ent->s.origin, end);
-                    end[2] -= 0.25f;
-                    trace = gi.trace(ent->s.origin, ent->mins, ent->maxs, end,
-                            ent, ent->health > 0 ? MASK_PLAYERSOLID : MASK_DEADSOLID);
-                    if (!trace.startsolid && !trace.allsolid
-                            && trace.ent == ent->groundentity
-                            && trace.plane.normal[2] >= 0.7f) {
-                        ent->groundentity_linkcount = ent->groundentity->linkcount;
-                    } else {
-                        ent->groundentity = NULL;
-                    }
-                } else if (FRAMESYNC || ent->groundentity->client ||
-                           ent->groundentity->solid == SOLID_NOT) {
-                    ent->groundentity = NULL;
-                }
-            }
+            G_CheckGround(ent);
             if (i > 0 && i <= game.maxclients) {
                 ClientBeginServerFrame(ent);
                 continue;
             }
             G_RunEntity(ent);
         }
+        if (SECS_TO_FRAMES(0.1f) > 1)
+            G_CheckLateGround();
     }
 
     HTTP_RunDownloads();
