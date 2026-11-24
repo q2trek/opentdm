@@ -45,6 +45,8 @@ What the tick rate commits change:
 
 - Countdowns, respawns, voted time limits and timeout transitions follow the server grid. Timeouts preserve linear mover endpoints.
 
+- Before timeout freeze, a platform blocked by a player rolls back without crush damage or reversing.
+
 - Fall damage uses the preceding grid frame's velocity sample.
 
 - Item and powerup deadlines, HUD indicators and tint follow the grid.

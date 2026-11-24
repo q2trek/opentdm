@@ -595,7 +595,7 @@ void SV_Physics_Pusher(edict_t *ent) {
 
         // if the pusher has a "blocked" function, call it
         // otherwise, just stay in place until the obstacle is gone
-        if (part->blocked) {
+        if (part->blocked && !(obstacle->client && tdm_match_status == MM_TIMEOUT && !level.timeout_frozen)) {
             part->blocked(part, obstacle);
         }
     } else {
