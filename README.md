@@ -47,6 +47,10 @@ What the tick rate commits change:
 
 - Trigger waits, map timers, jump pad sounds and liquid damage follow the grid. Hurt zones damage once per eligible window.
 
+- Fast snapshot recipients see intermediate projectile positions. Recipients at 10 Hz and MVD record the grid positions. Native loopback checks include decoded snapshots and demo readback. Live multiplayer and browser rendering were outside these checks.
+
+Projectile grid and presentation work draws on [OpenTDM_60HZ](https://github.com/Quake-Journey/OpenTDM_60HZ) ([r6010](https://github.com/Quake-Journey/OpenTDM_60HZ/commit/3836ec0) and [reference tip](https://github.com/Quake-Journey/OpenTDM_60HZ/commit/f68178d)).
+
 The same code also changes a few things at 10 Hz:
 
 - A hurt zone sounds only with a damaging hit in a whole-second window.

@@ -355,6 +355,7 @@ typedef struct {
     vec3_t origin;
     vec3_t angles;
     vec3_t carry;
+    vec3_t grid_from;
     float deltayaw;
     qboolean skip_touch;
 } pushed_t;
@@ -402,6 +403,7 @@ qboolean SV_Push(edict_t *pusher, vec3_t move, vec3_t amove) {
     VectorCopy(pusher->s.origin, pushed_p->origin);
     VectorCopy(pusher->s.angles, pushed_p->angles);
     VectorCopy(carry, pushed_p->carry);
+    VectorCopy(pusher->grid_from, pushed_p->grid_from);
     if (pusher->client) {
         pushed_p->deltayaw = pusher->client->ps.pmove.delta_angles[YAW];
     }
@@ -456,6 +458,7 @@ qboolean SV_Push(edict_t *pusher, vec3_t move, vec3_t amove) {
             VectorCopy(check->s.origin, pushed_p->origin);
             VectorCopy(check->s.angles, pushed_p->angles);
             VectorCopy(check->push_carry, pushed_p->carry);
+            VectorCopy(check->grid_from, pushed_p->grid_from);
 
             // try moving the contacted entity
             VectorAdd(check->s.origin, move, check->s.origin);
@@ -482,6 +485,11 @@ qboolean SV_Push(edict_t *pusher, vec3_t move, vec3_t amove) {
 
             block = SV_TestEntityPosition(check);
             if (!block) {   // pushed ok
+                if (check->grid_move) {
+                    vec3_t displacement;
+                    VectorSubtract(check->s.origin, pushed_p[-1].origin, displacement);
+                    VectorAdd(check->grid_from, displacement, check->grid_from);
+                }
                 gi.linkentity(check);
                 // impact?
                 continue;
@@ -499,6 +507,15 @@ qboolean SV_Push(edict_t *pusher, vec3_t move, vec3_t amove) {
             VectorSubtract(check->s.origin, move, check->s.origin);
             block = SV_TestEntityPosition(check);
             if (!block) {
+                if (check->grid_move) {
+                    vec3_t displacement;
+                    VectorSubtract(check->s.origin, pushed_p[-1].origin, displacement);
+                    VectorAdd(check->grid_from, displacement, check->grid_from);
+                    // This rider keeps the residual motion even if a later rider blocks.
+                    if (G_GridFrames(0.1f) > 1 && (!FRAMESYNC || check->grid_frame == level.realframenum) &&
+                        (displacement[0] || displacement[1] || displacement[2]))
+                        gi.linkentity(check);
+                }
                 pushed_p--;
                 continue;
             }
@@ -514,6 +531,7 @@ qboolean SV_Push(edict_t *pusher, vec3_t move, vec3_t amove) {
             VectorCopy(p->origin, p->ent->s.origin);
             VectorCopy(p->angles, p->ent->s.angles);
             VectorCopy(p->carry, p->ent->push_carry);
+            VectorCopy(p->grid_from, p->ent->grid_from);
             if (p->ent->client) {
                 p->ent->client->ps.pmove.delta_angles[YAW] = p->deltayaw;
             }

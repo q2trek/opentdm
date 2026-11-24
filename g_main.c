@@ -20,6 +20,19 @@
 
 #include "g_local.h"
 #include <stddef.h>
+#include "framediv.h"
+
+static const opentdm60_framediv_v1_t *framediv_api;
+static game_export_ex_t exports_ex = {
+    .apiversion = GAME_API_VERSION_EX,
+    .structsize = sizeof(exports_ex),
+};
+
+static void G_ClearFrameDiv(void)
+{
+    framediv_api = NULL;
+    exports_ex.CustomizeEntityToClient = NULL;
+}
 
 game_locals_t game;
 level_locals_t level;
@@ -189,6 +202,7 @@ void ShutdownGame(void) {
     gi.dprintf("==== ShutdownGame ====\n");
     G_ReportCrushOverflow();
     gi.cvar_forceset("g_features", "0");
+    G_ClearFrameDiv();
     G_UnlagShutdown();
     gi.FreeTags(TAG_LEVEL);
     gi.FreeTags(TAG_GAME);
@@ -200,6 +214,7 @@ void ShutdownGame(void) {
  */
 DLL_EXPORT game_export_t* GetGameAPI(game_import_t *import) {
     gi = *import;
+    G_ClearFrameDiv();
 #ifdef USE_UNLAG
     unlag_game_ex = NULL;
     unlag_api = NULL;
@@ -227,20 +242,60 @@ DLL_EXPORT game_export_t* GetGameAPI(game_import_t *import) {
 #ifdef USE_UNLAG
 const game_import_ex_t *unlag_game_ex;
 const unlag_api_v1_t *unlag_api;
+#endif
+
+static qboolean G_CustomizeEntityToClient(edict_t *receiver, edict_t *ent, customize_entity_t *temp)
+{
+    if (!framediv_api || !ent->grid_move || ent->grid_frame < 0)
+        return false;
+
+    int div = G_GridFrames(0.1f);
+    int d = framediv_api->ClientFrameDiv(receiver);
+    if (d < 1 || d >= div)
+        return false;
+
+    // The snapshot is built after RunFrame has advanced the world clock.
+    int j = level.realframenum - 1 - ent->grid_frame;
+    if (j < 0)
+        j = 0;
+    float f0 = (float)(j < div ? j : div) / div;
+    float f1 = (float)(j + d < div ? j + d : div) / div;
+
+    temp->s = ent->s;
+    for (int i = 0; i < 3; i++) {
+        float delta = ent->s.origin[i] - ent->grid_from[i];
+        temp->s.old_origin[i] = ent->grid_from[i] + delta * f0;
+        temp->s.origin[i] = ent->grid_from[i] + delta * f1;
+        float da = ent->s.angles[i] - ent->grid_from_angles[i];
+        da -= 360.0f * floorf((da + 180.0f) / 360.0f);
+        temp->s.angles[i] = ent->grid_from_angles[i] + da * f1;
+    }
+    return true;
+}
 
 DLL_EXPORT const game_export_ex_t *GetGameAPIEx(const game_import_ex_t *import)
 {
-    static const game_export_ex_t exports = {
-        .apiversion = GAME_API_VERSION_EX,
-        .structsize = sizeof(exports),
-    };
-    if (import && import->structsize >= offsetof(game_import_ex_t, TagRealloc) && import->GetExtension) {
-        unlag_game_ex = import;
-        unlag_api = import->GetExtension(UNLAG_API_V1);
-    }
-    return &exports;
-}
+    G_ClearFrameDiv();
+#ifdef USE_UNLAG
+    unlag_game_ex = NULL;
+    unlag_api = NULL;
 #endif
+    if (!import || import->apiversion < GAME_API_VERSION_EX_MINIMUM ||
+        import->structsize < offsetof(game_import_ex_t, GetExtension) + sizeof(import->GetExtension) ||
+        !import->GetExtension)
+        return &exports_ex;
+
+    const opentdm60_framediv_v1_t *api = import->GetExtension(OPENTDM60_FRAMEDIV_V1);
+    if (api && api->ClientFrameDiv) {
+        framediv_api = api;
+        exports_ex.CustomizeEntityToClient = G_CustomizeEntityToClient;
+    }
+#ifdef USE_UNLAG
+    unlag_game_ex = import;
+    unlag_api = import->GetExtension(UNLAG_API_V1);
+#endif
+    return &exports_ex;
+}
 
 #ifndef GAME_HARD_LINKED
 // this is only here so the functions in q_shared.c and q_shwin.c can link

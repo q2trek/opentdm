@@ -38,6 +38,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef max
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #endif
+#endif
+
 #define q_gameabi IMPORT
 typedef int qhandle_t;
 /* Use the API 3 entity layout even when the engine enables protocol extensions. */
@@ -46,11 +48,12 @@ typedef int qhandle_t;
 #define USE_PROTOCOL_EXTENSIONS 0
 #include "gameext.h"
 #pragma pop_macro("USE_PROTOCOL_EXTENSIONS")
+#ifdef USE_UNLAG
 #include "unlag.h"
 extern const game_import_ex_t *unlag_game_ex;
 extern const unlag_api_v1_t *unlag_api;
-DLL_EXPORT const game_export_ex_t *GetGameAPIEx(const game_import_ex_t *import);
 #endif
+DLL_EXPORT const game_export_ex_t *GetGameAPIEx(const game_import_ex_t *import);
 
 // the "gameversion" client command will print this plus compile date
 #define	GAMEVERSION	"OpenTDM"
