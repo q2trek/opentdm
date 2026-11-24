@@ -707,7 +707,7 @@ void Cmd_Kill_f(edict_t *ent) {
         return;
     }
 
-    if ((level.framenum - ent->client->respawn_framenum) < SECS_TO_FRAMES(5)) {
+    if (G_WindowFrame(level.framenum) - ent->client->respawn_framenum < SECS_TO_FRAMES(5)) {
         return;
     }
 

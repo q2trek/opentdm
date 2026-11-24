@@ -114,13 +114,13 @@ void TDM_ApplyVote(void) {
             level.match_end_framenum = level.match_start_framenum
                     + SECS_TO_FRAMES(g_match_time->value);
 
-            //end immediately if timelimit was reduced
-            if (level.match_end_framenum < level.framenum) {
-                level.match_end_framenum = level.framenum;
+            int window = G_WindowFrame(level.framenum);
+            if (level.match_end_framenum < window) {
+                level.match_end_framenum = window;
             }
 
             //tl was extended during OT, remove OT
-            if (level.match_end_framenum > level.framenum
+            if (level.match_end_framenum > window
                     && (tdm_match_status == MM_OVERTIME
                             || tdm_match_status == MM_SUDDEN_DEATH)) {
                 gi.bprintf(PRINT_HIGH, "Timelimit extended, %s canceled!\n",

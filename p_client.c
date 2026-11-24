@@ -436,7 +436,7 @@ void player_die(edict_t *self, edict_t *inflictor, edict_t *attacker,
 
     if (!self->deadflag) {
         G_UnlagNewLife(self);
-        self->client->respawn_framenum = level.framenum
+        self->client->respawn_framenum = G_WindowFrame(level.framenum)
                 + SECS_TO_FRAMES(g_respawn_time->value);
         LookAtKiller(self, inflictor, attacker);
         self->client->ps.pmove.pm_type = PM_DEAD;
@@ -1014,6 +1014,7 @@ void CopyToBodyQue(edict_t *ent) {
     body->movetype = ent->movetype;
     body->toss_phase = 0;
     body->toss_hold = false;
+    body->toss_resume_hold = 0;
     body->groundentity = ent->groundentity;
     body->die = body_die;
     body->takedamage = DAMAGE_YES;
@@ -1769,7 +1770,7 @@ void ClientThink(edict_t *ent, usercmd_t *ucmd) {
 
     //no movement during map or match intermission
     if (tdm_match_status == MM_SCOREBOARD
-            || (tdm_match_status == MM_TIMEOUT && ent->client->pers.team)) {
+            || ((tdm_match_status == MM_TIMEOUT || GAME_FROZEN) && ent->client->pers.team)) {
         client->resp.cmd_angles[0] = SHORT2ANGLE(ucmd->angles[0]);
         client->resp.cmd_angles[1] = SHORT2ANGLE(ucmd->angles[1]);
         client->resp.cmd_angles[2] = SHORT2ANGLE(ucmd->angles[2]);
@@ -1777,7 +1778,7 @@ void ClientThink(edict_t *ent, usercmd_t *ucmd) {
         // the weapon does not run during a timeout: follow the real
         // buttons, so that fire released during the pause is not still
         // down on resume, and drop a press made during it
-        if (tdm_match_status == MM_TIMEOUT) {
+        if (tdm_match_status == MM_TIMEOUT || GAME_FROZEN) {
             client->oldbuttons = client->buttons;
             client->buttons = ucmd->buttons;
             client->latched_buttons &= ~BUTTON_ATTACK;

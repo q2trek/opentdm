@@ -979,7 +979,7 @@ void ClientEndServerFrame(edict_t *ent) {
     AngleVectors(ent->client->v_angle, forward, right, up);
 
     //no world effects during timeout
-    if (tdm_match_status != MM_TIMEOUT) {
+    if (tdm_match_status != MM_TIMEOUT && !GAME_FROZEN) {
         // burn from lava, etc
         P_WorldEffects();
     }
@@ -1019,7 +1019,7 @@ void ClientEndServerFrame(edict_t *ent) {
     bobmove *= (10.0f / (1 * SERVER_FPS));
 
     //no bobtime advancement during timeout
-    if (tdm_match_status != MM_TIMEOUT) {
+    if (tdm_match_status != MM_TIMEOUT && !GAME_FROZEN) {
         current_client->bobtime += bobmove;
     }
 
@@ -1082,7 +1082,7 @@ void ClientEndServerFrame(edict_t *ent) {
     G_SetClientSound(ent);
 
     //no frame advancement during timeout
-    if (tdm_match_status != MM_TIMEOUT) {
+    if (tdm_match_status != MM_TIMEOUT && !GAME_FROZEN) {
         G_SetClientFrame(ent);
         ent->client->last_model_frame = ent->s.frame;
     }

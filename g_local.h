@@ -245,6 +245,9 @@ extern int      SERVER_FPS;
 #define FRAMES_TO_SECS(frames)      (int)((frames) * FRAMETIME)
 // first real frame of each 100 ms; real frames keep running in a timeout
 #define FRAMESYNC                   ((level.realframenum % (int)(0.1f * SERVER_FPS)) == 0)
+// A frozen match clock waits for the real grid if a command has left MM_TIMEOUT.
+#define GAME_FROZEN                 (level.timeout_frozen && (tdm_match_status == MM_TIMEOUT || \
+                                     (!FRAMESYNC && !(level.framenum % SECS_TO_FRAMES(0.1f)))))
 
 // memory tags to allow dynamic memory to be cleaned up
 #define TAG_GAME            765  // clear when unloading the dll
@@ -559,6 +562,7 @@ typedef struct {
     int             last_tdm_match_status;
     qboolean        tdm_pseudo_1v1mode;
     int             timeout_end_framenum;
+    qboolean        timeout_frozen;
     int             warmup_start_framenum;
     int             numspawns;
     edict_t         *spawns[TDM_MAX_MAP_SPAWNPOINTS];

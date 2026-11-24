@@ -585,6 +585,33 @@ void SV_Physics_Pusher(edict_t *ent) {
     }
 }
 
+void G_FreezeFrame(void) {
+    int div = SECS_TO_FRAMES(0.1f);
+    if (div <= 1)
+        return;
+
+    for (int i = 1; i < globals.num_edicts; i++) {
+        edict_t *ent = g_edicts + i;
+        if (!ent->inuse || ent->movetype == MOVETYPE_PUSH || ent->movetype == MOVETYPE_STOP)
+            continue;
+        if (ent->nextthink == level.framenum)
+            ent->nextthink += div;
+        if ((ent->movetype == MOVETYPE_TOSS || ent->movetype == MOVETYPE_BOUNCE) &&
+                !ent->grid_move && !ent->groundentity)
+            ent->toss_resume_hold = div - 1;
+    }
+}
+
+void G_ResumeMoverThinks(void) {
+    for (int i = 1; i < globals.num_edicts; i++) {
+        edict_t *ent = g_edicts + i;
+        // The resume frame counts without a push. Angular moves recalculate their final step.
+        if (ent->inuse && (ent->movetype == MOVETYPE_PUSH || ent->movetype == MOVETYPE_STOP) &&
+                ent->nextthink > level.framenum && !VectorCompare(ent->velocity, vec3_origin))
+            ent->nextthink++;
+    }
+}
+
 /**
  * Non moving objects can only think
  */

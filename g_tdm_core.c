@@ -1073,8 +1073,8 @@ void TDM_BeginCountdown(void) {
     //called to apply a temporary hack for people who do 1v1 on tdm mode
     TDM_UpdateTeamNames();
 
-    level.match_start_framenum = level.framenum
-            + SECS_TO_FRAMES(g_match_countdown->value);
+    level.match_start_framenum = G_WindowFrame(level.framenum)
+            + G_GridFrames(g_match_countdown->value);
 
     // force players to record
     FOREACH_CLIENT(client) {
@@ -1451,7 +1451,8 @@ void TDM_CheckTimes(void) {
         if (remaining > 0 && remaining <= SECS_TO_FRAMES(5)
                 && remaining % SECS_TO_FRAMES(1) == 0) {
             gi.bprintf(PRINT_HIGH, "%d\n", (int) (remaining / SERVER_FPS));
-        } else if (remaining == 0) {
+        } else if (remaining <= 0 && FRAMESYNC) {
+            G_ResumeMoverThinks();
             TDM_FixDeltaAngles();
             gi.bprintf(PRINT_HIGH, "Fight!\n");
             level.tdm_timeout_caller = NULL;
@@ -1972,7 +1973,7 @@ void TDM_ResumeGame(void) {
                     FRAMES_TO_SECS(level.match_end_framenum - level.framenum)));
 
     level.timeout_end_framenum = 0;
-    level.match_resume_framenum = level.realframenum + SECS_TO_FRAMES(10.4f);
+    level.match_resume_framenum = G_WindowFrame(level.realframenum) + SECS_TO_FRAMES(10.4f);
 }
 
 /**

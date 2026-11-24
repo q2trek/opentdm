@@ -682,6 +682,7 @@ void TDM_Timeout_f(edict_t *ent) {
     // r1: crash fix, never reset the match status to a timeout (calling time during resume timer)
     if (tdm_match_status != MM_TIMEOUT) {
         level.last_tdm_match_status = tdm_match_status;
+        level.timeout_frozen = false;
     }
 
     tdm_match_status = MM_TIMEOUT;
@@ -722,7 +723,7 @@ void TDM_Win_f(edict_t *ent) {
     }
 
     level.timeout_end_framenum = 0;
-    level.match_resume_framenum = level.realframenum + 1;
+    level.match_resume_framenum = G_WindowFrame(level.realframenum) + SECS_TO_FRAMES(0.1f);
 }
 
 /**

@@ -491,6 +491,7 @@ void TDM_Disconnected(edict_t *ent) {
                     level.timeout_end_framenum = level.realframenum
                             + SECS_TO_FRAMES(g_1v1_timeout->value);
                     level.last_tdm_match_status = tdm_match_status;
+                    level.timeout_frozen = false;
                     tdm_match_status = MM_TIMEOUT;
 
                     level.tdm_timeout_caller = ent->client->resp.teamplayerinfo;

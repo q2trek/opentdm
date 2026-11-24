@@ -520,7 +520,12 @@ void G_RunFrame(void) {
         }
     }
 
-    if (tdm_match_status != MM_TIMEOUT) {
+    if (tdm_match_status == MM_TIMEOUT && !level.timeout_frozen && FRAMESYNC) {
+        G_FreezeFrame();
+        level.timeout_frozen = true;
+    }
+
+    if (!GAME_FROZEN) {
         // exit intermissions
         if (level.exitintermission) {
             if (level.exitintermission == 2) {
@@ -552,7 +557,8 @@ void G_RunFrame(void) {
 
             G_CheckGround(ent);
             if (i > 0 && i <= game.maxclients) {
-                ClientBeginServerFrame(ent);
+                if (tdm_match_status != MM_TIMEOUT)
+                    ClientBeginServerFrame(ent);
                 continue;
             }
             G_RunEntity(ent);
@@ -563,12 +569,12 @@ void G_RunFrame(void) {
 
     HTTP_RunDownloads();
     TDM_UpdateConfigStrings(false);
-    TDM_CheckTimes();
+    if (!GAME_FROZEN || tdm_match_status == MM_TIMEOUT)
+        TDM_CheckTimes();
     ClientEndServerFrames();    // build the playerstate_t for all players
     G_UnlagRecord();
-    level.realframenum++;
 
-    if (tdm_match_status != MM_TIMEOUT) {
+    if (!GAME_FROZEN) {
         // save old_origins for next frame
         ent = &g_edicts[0];
         for (i = 0; i < globals.num_edicts; i++, ent++) {
@@ -578,4 +584,5 @@ void G_RunFrame(void) {
         }
         level.framenum++;
     }
+    level.realframenum++;
 }

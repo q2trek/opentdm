@@ -39,8 +39,11 @@ What the tick rate commits change:
 
 - Weapons step at most once per 100 ms window. Only the first weapon step in a window can consume a released tap.
 
+- Countdowns, respawns, voted time limits and timeout transitions follow the server grid. Timeouts preserve linear mover endpoints.
+
 The same code also changes a few things at 10 Hz:
 
+- A linear mover interrupted by a timeout resumes to its normal endpoint.
 - A second short attack tap in the same window is discarded.
 - Moves that aren't whole multiples of 1/8 unit keep their exact average speed.
 - A player on a mover keeps it as ground in frames without a usercmd.
