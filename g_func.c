@@ -1794,10 +1794,15 @@ void SP_trigger_elevator(edict_t *self) {
 
  These can used but not touched.
  */
-void func_timer_think(edict_t *self) {
+static void func_timer_fire(edict_t *self, int minimum)
+{
     G_UseTargets(self, self->activator);
-    self->nextthink = level.framenum
-            + SECS_TO_FRAMES(self->wait + crandom() * self->random);
+    int delay = G_GridFrames(self->wait + crandom() * self->random);
+    self->nextthink = G_WindowFrame(level.framenum) + (delay < minimum ? minimum : delay);
+}
+
+void func_timer_think(edict_t *self) {
+    func_timer_fire(self, G_GridFrames(0.1f));
 }
 
 void func_timer_use(edict_t *self, edict_t *other, edict_t *activator) {
@@ -1811,9 +1816,9 @@ void func_timer_use(edict_t *self, edict_t *other, edict_t *activator) {
 
     // turn it on
     if (self->delay) {
-        self->nextthink = level.framenum + SECS_TO_FRAMES(self->delay);
+        self->nextthink = G_WindowFrame(level.framenum) + G_GridFrames(self->delay);
     } else {
-        func_timer_think(self);
+        func_timer_fire(self, 0);
     }
 }
 
@@ -1826,16 +1831,15 @@ void SP_func_timer(edict_t *self) {
     self->think = func_timer_think;
 
     if (self->random >= self->wait) {
-        self->random = self->wait - FRAMETIME;
+        self->random = self->wait - 0.1f;
         gi.dprintf("func_timer at %s has random >= wait\n",
                 vtos(self->s.origin));
     }
 
     if (self->spawnflags & 1) {
         self->nextthink =
-                level.framenum
-                        + SECS_TO_FRAMES(
-                                1.0f + st.pausetime + self->delay + self->wait + crandom() * self->random);
+                G_WindowFrame(level.framenum)
+                + G_GridFrames(1.0f + st.pausetime + self->delay + self->wait + crandom() * self->random);
         self->activator = self;
     }
 

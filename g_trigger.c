@@ -54,7 +54,7 @@ void multi_trigger(edict_t *ent) {
 
     if (ent->wait > 0) {
         ent->think = multi_wait;
-        ent->nextthink = level.framenum + SECS_TO_FRAMES(ent->wait);
+        ent->nextthink = G_WindowFrame(level.framenum) + G_GridFrames(ent->wait);
     } else {// we can't just remove (self) here, because this is a touch function
             // called while looping through area links...
         ent->touch = NULL;
@@ -274,9 +274,9 @@ void trigger_push_touch(edict_t *self, edict_t *other, cplane_t *plane,
         if (other->client) {
             // don't take falling damage immediately from this
             VectorCopy(other->velocity, other->client->oldvelocity);
-            if (other->fly_sound_debounce_framenum < level.framenum) {
-                other->fly_sound_debounce_framenum = level.framenum
-                        + SECS_TO_FRAMES(1.5f);
+            int window = G_WindowFrame(level.framenum);
+            if (other->fly_sound_debounce_framenum < window) {
+                other->fly_sound_debounce_framenum = window + SECS_TO_FRAMES(1.5f);
                 gi.sound(other, CHAN_AUTO, windsound, 1, ATTN_NORM, 0);
             }
         }
@@ -326,22 +326,17 @@ void hurt_touch(edict_t *self, edict_t *other, cplane_t *plane,
         return;
     }
 
-    if (self->touch_debounce_framenum > level.framenum) {
+    int window = G_WindowFrame(level.framenum);
+    if (self->touch_debounce_framenum > window)
         return;
-    }
 
-    if (self->spawnflags & 16) {
-        self->touch_debounce_framenum = level.framenum + SECS_TO_FRAMES(1);
-    } else {
-        self->touch_debounce_framenum = level.framenum + SECS_TO_FRAMES(0.1f);
-    }
+    if (self->spawnflags & 16)
+        self->touch_debounce_framenum = window + SECS_TO_FRAMES(1);
+    else
+        self->touch_debounce_framenum = window + SECS_TO_FRAMES(0.1f);
 
-    // the sound has its own 1 s cooldown, whatever the contact phase
-    if (!(self->spawnflags & 4)
-            && self->fly_sound_debounce_framenum <= level.framenum) {
-        self->fly_sound_debounce_framenum = level.framenum + SECS_TO_FRAMES(1);
+    if (!(self->spawnflags & 4) && window % (SECS_TO_FRAMES(1)) == 0)
         gi.sound(other, CHAN_AUTO, self->noise_index, 1, ATTN_NORM, 0);
-    }
 
     if (self->spawnflags & 8) {
         dflags = DAMAGE_NO_PROTECTION;

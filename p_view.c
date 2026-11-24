@@ -595,6 +595,9 @@ void P_WorldEffects(void) {
         return;
     }
 
+    if (!FRAMESYNC)
+        return;
+
     waterlevel = current_player->waterlevel;
     old_waterlevel = current_client->old_waterlevel;
     current_client->old_waterlevel = waterlevel;
@@ -671,9 +674,9 @@ void P_WorldEffects(void) {
         if (current_player->air_finished_framenum < level.framenum) {// drown!
             if (current_player->client->next_drown_framenum < level.framenum
                     && current_player->health > 0) {
-                // Preserve the 1.1 s gap imposed by the exclusive 10 Hz deadline.
+                // The strict cutoff permits the next hit on the following 100 ms step.
                 current_player->client->next_drown_framenum = level.framenum
-                        + SECS_TO_FRAMES(1) + SECS_TO_FRAMES(0.1f) - 1;
+                        + SECS_TO_FRAMES(1);
 
                 // take more damage the longer underwater
                 current_player->dmg += 2;
@@ -726,32 +729,23 @@ void P_WorldEffects(void) {
                         + SECS_TO_FRAMES(1);
             }
 
-            //FIXME: ugly hack to a void sizzle damage being multiplied based
-            // on server framenum, can be biased depending on what frame the
-            // client entered the volume
-            if (FRAMESYNC) {
-                if (envirosuit) {    // take 1/3 damage with envirosuit
-                    T_Damage(current_player, world, world, vec3_origin,
-                            current_player->s.origin, vec3_origin,
-                            1 * waterlevel, 0, 0, MOD_LAVA);
-                } else {
-                    T_Damage(current_player, world, world, vec3_origin,
-                            current_player->s.origin, vec3_origin,
-                            3 * waterlevel, 0, 0, MOD_LAVA);
-                }
+            if (envirosuit) {    // take 1/3 damage with envirosuit
+                T_Damage(current_player, world, world, vec3_origin,
+                        current_player->s.origin, vec3_origin,
+                        1 * waterlevel, 0, 0, MOD_LAVA);
+            } else {
+                T_Damage(current_player, world, world, vec3_origin,
+                        current_player->s.origin, vec3_origin,
+                        3 * waterlevel, 0, 0, MOD_LAVA);
             }
         }
 
         if (current_player->watertype & CONTENTS_SLIME) {
             // no damage from slime with envirosuit
             if (!envirosuit) {
-                //FIXME: ugly hack to a void sizzle damage being multiplied based on server framenum, can be biased depending on what
-                //frame the client entered the volume
-                if (FRAMESYNC) {
-                    T_Damage(current_player, world, world, vec3_origin,
-                            current_player->s.origin, vec3_origin,
-                            1 * waterlevel, 0, 0, MOD_SLIME);
-                }
+                T_Damage(current_player, world, world, vec3_origin,
+                        current_player->s.origin, vec3_origin,
+                        waterlevel, 0, 0, MOD_SLIME);
             }
         }
     }

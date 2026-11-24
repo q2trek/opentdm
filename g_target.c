@@ -168,7 +168,7 @@ void use_target_explosion(edict_t *self, edict_t *other, edict_t *activator) {
         return;
     }
     self->think = target_explosion_explode;
-    self->nextthink = level.framenum + SECS_TO_FRAMES(self->delay);
+    self->nextthink = G_WindowFrame(level.framenum) + G_GridFrames(self->delay);
 }
 
 /**

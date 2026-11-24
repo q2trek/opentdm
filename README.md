@@ -45,8 +45,11 @@ What the tick rate commits change:
 
 - Item and powerup deadlines, HUD indicators and tint follow the grid.
 
+- Trigger waits, map timers, jump pad sounds and liquid damage follow the grid. Hurt zones damage once per eligible window.
+
 The same code also changes a few things at 10 Hz:
 
+- A hurt zone sounds only with a damaging hit in a whole-second window.
 - A dropped quad picked up at its expiry is consumed without adding quad time.
 - A linear mover interrupted by a timeout resumes to its normal endpoint.
 - A second short attack tap in the same window is discarded.
